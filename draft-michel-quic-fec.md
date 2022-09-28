@@ -25,8 +25,8 @@ venue:
 
 author:
  -
-    fullname: Your Name Here
-    organization: Your Organization Here
+    fullname: François Michel
+    organization: UCLouvain
     email: "francois.michel@uclouvain.be"
 
 normative:
