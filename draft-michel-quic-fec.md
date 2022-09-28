@@ -23,7 +23,7 @@ title: "Forward Erasure Correction for QUIC loss recovery"
 # abbrev: "TODO - Abbreviation"
 category: info
 
-docname: draft-todo-yourname-protocol-latest
+docname: draft-michel-quic-fec-latest
 submissiontype: IETF  # also: "independent", "IAB", or "IRTF"
 number:
 date:
@@ -56,7 +56,7 @@ normative:
 informative:
   QUIC-FEC: DOI.10.23919/IFIPNetworking.2019.8816838
   FlEC: DOI.10.1109/TNET.2022.3195611
-  draft-swett-nwcrg-coding-for-quic-04: 
+  I-D.swett-nwcrg-coding-for-quic: 
 
 
 
@@ -84,7 +84,7 @@ experience to their users.
 Several works have already been performed to consider the use of 
 Forward Erasure Correction for the QUIC protocol to ensure timely
 data delivery for delay-sensitive applications {{QUIC-FEC}} {{FlEC}}
-{{draft-swett-nwcrg-coding-for-quic-04}}.
+{{I-D.swett-nwcrg-coding-for-quic}}.
 This documents lists the required additions to the QUIC protocol to
 extend its loss recovery mechanism and make it able to recover from 
 packet losses prior to loss detection. 
