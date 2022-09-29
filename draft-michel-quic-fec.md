@@ -74,6 +74,86 @@ packet losses prior to loss detection.
 
 {::boilerplate bcp14-tagged}
 
+# The network channel VS the coding channel
+
+TODO
+
+# Sending redundancy with the QUIC protocol
+
+Forward Erasure Correction is not the only possible mechanism to send
+redundant information with QUIC: QUIC already sends acknowledgements
+redundantly with cumulative acknowledgements and ACK blocks repeated
+until they are acked by the peer. If an ACK frame is lost, the
+acknowledged packets can be retrieved. On the other hand,
+repeating the payload of STREAM or DATAGRAM frames will have a large
+negative impact on bandwidth. FEC and network coding allow sending
+more efficiently redundancy to protect data from losses.
+
+## Example {-}
+
+A simple and suboptimal FEC technique can be implemented using a XOR
+operation between all the informations chunks whose retransmission
+should be avoided. Let P1, P2 and P3 be three pieces of information of
+the same sizesent on the wire. The repair symbol R can be defined like
+the following :
+
+    R = P1 XOR P2 XOR P3
+
+Such that the loss of any of P1, P2 or P3 can be recovered by XORing
+the two remaining pieces of information with R.
+
+## Protocol requirements for protecting information through FEC
+
+In this section, we list the points that must be defined by the protocol
+for allowing QUIC endpoints to protect information using FEC in a more
+efficient way than duplicating the information sent on the wire.
+
+### Defining the content of source symbols
+
+There is no need to protect every piece information sent on the wire by
+QUIC. Some pieces of information are already sent redundantly (e.g. ACKs)
+and some data are not delay sensitive and can be retransmitted later with
+no harm (e.g. background download on a separate stream). When exchanging
+packets, endpoints need to agree on which parts of the packets are part of
+the protected source symbols and how to build a source symbol from what is
+sent on the wire.
+
+The versions 01 and 02 of {{I-D.swett-nwcrg-coding-for-quic}} only protect
+streams payload. The idea is simple when using a single stream but becomes
+complicated and requires more signaling in a multi-stream scenario. It also
+cannot handle the protection of DATAGRAM frames payload.
+In this document, we propose to consider whole frames as part of the source
+symbols. Source symbols are thus the equivalent to QUIC packets for the
+coding channel: packets carry frames through the network channel while
+source symbols carry frames through the coding channel. In order to reduce
+signalling between the peers, the design described in this document requires
+that a single source symbol MUST NOT contain the frames of several QUIC
+packets at the same time.
+
+### Identifying the source symbols
+
+In order to recover lost source symbols, the decoder needs to know how many
+and which source symbols were lost. From the receiver viewpoint, it is not
+possible to distinguish a lost packet from a packet that has never been
+sent as QUIC does not enforce the sending of packets with a contiguously
+increasing packet number. Furthermore a QUIC sender may not want to protect
+the payload of some packets if they do not carry latency-sensitive
+information. It is thus required to uniquely identify the source symbols
+so that the decoder can point the lost source symbol by looking at the
+received source symbols only. Source symbols are thus attributed a Symbol
+ID (SID). As the QUIC packet number cannot be used to carry the SID, this
+information must be transmitted using either a dedicated QUIC frame or a
+dedicated header field. The following sections discuss the two alternatives.
+
+#### Alternative 1: sending the SID inside a frame
+
+TODO
+
+#### Alternative 2: sending the SID using a packet header field
+
+
+
+
 
 # Security Considerations
 
