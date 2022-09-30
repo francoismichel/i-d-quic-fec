@@ -4,8 +4,8 @@
 
 QUIC                                                           F. Michel
 Internet-Draft                                                 UCLouvain
-Intended status: Informational                         29 September 2022
-Expires: 2 April 2023
+Intended status: Informational                         30 September 2022
+Expires: 3 April 2023
 
 
            Forward Erasure Correction for QUIC loss recovery
@@ -49,7 +49,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 2 April 2023.
+   This Internet-Draft will expire on 3 April 2023.
 
 Copyright Notice
 
@@ -70,25 +70,23 @@ Table of Contents
    1.  Introduction
    2.  Conventions and Definitions
    3.  The network channel VS the coding channel
-   4.  Sending redundancy with the QUIC protocol
-     4.1.  Example {-}
-     4.2.  Protocol requirements for protecting information through
+     3.1.  Protocol requirements for protecting information through
            FEC
-       4.2.1.  Defining the content of source symbols
-       4.2.2.  Identifying the source symbols
-   5.  Security Considerations
-   6.  IANA Considerations
-   7.  References
-     7.1.  Normative References
-     7.2.  Informative References
+       3.1.1.  Defining the content of source symbols
+       3.1.2.  Identifying the source symbols
+   4.  Security Considerations
+   5.  IANA Considerations
+   6.  References
+     6.1.  Normative References
+     6.2.  Informative References
    Acknowledgments
    Author's Address
 
 1.  Introduction
 
-   QUIC version 1 [QUIC] does not retransmit neither frames nor packets
-   upon network losses.  Instead, the lost information is sent again in
-   new frames carried by new packets.  Retransmitting the lost
+   QUIC version 1 [QUICv1] does not retransmit neither frames nor
+   packets upon network losses.  Instead, the lost information is sent
+   again in new frames carried by new packets.  Retransmitting the lost
    information requires the loss recovery mechanism to identify lost
    packets which may take up to several hundreds of milliseconds
    [QUIC-RECOVERY].  Depending on their delay-sensitivity, some
@@ -115,38 +113,14 @@ Table of Contents
 
    TODO
 
-4.  Sending redundancy with the QUIC protocol
-
-   Forward Erasure Correction is not the only possible mechanism to send
-   redundant information with QUIC: QUIC already sends acknowledgements
-   redundantly with cumulative acknowledgements and ACK blocks repeated
-   until they are acked by the peer.  If an ACK frame is lost, the
-   acknowledged packets can be retrieved.  On the other hand, repeating
-   the payload of STREAM or DATAGRAM frames will have a large negative
-   impact on bandwidth.  FEC and network coding allow sending more
-   efficiently redundancy to protect data from losses.
-
-4.1.  Example {-}
-
-   A simple and suboptimal FEC technique can be implemented using a XOR
-   operation between all the informations chunks whose retransmission
-   should be avoided.  Let P1, P2 and P3 be three pieces of information
-   of the same sizesent on the wire.  The repair symbol R can be defined
-   like the following :
-
-   R = P1 XOR P2 XOR P3
-
-   Such that the loss of any of P1, P2 or P3 can be recovered by XORing
-   the two remaining pieces of information with R.
-
-4.2.  Protocol requirements for protecting information through FEC
+3.1.  Protocol requirements for protecting information through FEC
 
    In this section, we list the points that must be defined by the
    protocol for allowing QUIC endpoints to protect information using FEC
    in a more efficient way than duplicating the information sent on the
    wire.
 
-4.2.1.  Defining the content of source symbols
+3.1.1.  Defining the content of source symbols
 
    There is no need to protect every piece information sent on the wire
    by QUIC.  Some pieces of information are already sent redundantly
@@ -170,7 +144,7 @@ Table of Contents
    single source symbol MUST NOT contain the frames of several QUIC
    packets at the same time.
 
-4.2.2.  Identifying the source symbols
+3.1.2.  Identifying the source symbols
 
    In order to recover lost source symbols, the decoder needs to know
    how many and which source symbols were lost.  From the receiver
@@ -181,39 +155,96 @@ Table of Contents
    they do not carry latency-sensitive information.  It is thus required
    to uniquely identify the source symbols so that the decoder can point
    the lost source symbol by looking at the received source symbols
-   only.  Source symbols are thus attributed a Symbol ID (SID).  As the
-   QUIC packet number cannot be used to carry the SID, this information
-   must be transmitted using either a dedicated QUIC frame or a
-   dedicated header field.  The following sections discuss the two
-   alternatives.
+   only.  Source symbols are thus attributed a Symbol ID (SID).  The SID
+   of first source symbol MUST be zero and increase by exactly one for
+   every new source symbol.  As the QUIC packet number cannot be used to
+   carry the SID, this information must be transmitted using either a
+   dedicated QUIC frame or a dedicated header field.  The following
+   sections discuss the two alternatives.
 
-4.2.2.1.  Alternative 1: sending the SID inside a frame
+3.1.2.1.  Alternative 1: sending the SID inside a frame
 
-   TODO
+   This alternative is compatible with [QUICv1].  It defines a new SID
+   frame as shown in Figure 1.
 
-4.2.2.2.  Alternative 2: sending the SID using a packet header field
+   SID {
+     SID (i),
+   }
 
-5.  Security Considerations
+                         Figure 1: SID frame format
+
+   A QUIC packet carrying an SID frame means that the frames of that
+   packet are part of a FEC source symbol.  The SID of this symbol is
+   represented by the only field of the SID frame.  A packet cannot
+   contain more than one SID frame.  A packet whose payload is FEC-
+   protected MUST contain a SID frame whose SID field is the SID of the
+   related source symbol.  This alternative has one drawback: the SID
+   frame is related to its containing packet.  The SID frame is thus not
+   idempotent.
+
+3.1.2.2.  Alternative 2: sending the SID and the protected frames inside
+          a frame
+
+   This alternative is compatible with [QUICv1].  It defines a new
+   SOURCE_SYMBOL frame as shown in Figure 2.
+
+   SOURCE_SYMBOL {
+     SID (i),
+     FEC Protected Payload (..)
+   }
+
+                    Figure 2: SOURCE_SYMBOL frame format
+
+   The frame explicitly represents a SOURCE_SYMBOL.  The FEC Protected
+   Payload field is analogous to the payload of a QUIC packet: it
+   contains a sequence of frames that are protected by FEC.  The
+   SOURCE_SYMBOL frame contains frames just as QUIC packets do.  The
+   advantage of this approach is that the SOURCE_SYMBOL frame is
+   idempotent: it is not related to its containing packet as it
+   describes clearly the frames inside the source symbol.  The main
+   drawback is that existing QUIC implementations are not used to write
+   frames inside other frames which may increase the implementation cost
+   of the approach.
+
+3.1.2.3.  Alternative 3 (thrash ?): sending the SID using a packet
+          header field
+
+   This alternative is not compatible with [QUICv1] and requires a new
+   protocol version.  It defines a new short header field that is part
+   of the 1-RTT protected payload.  The 1-RTT packet payload is
+   redefined as shown in Figure 3.
+
+   Packet Payload {
+     SID (i),
+     Frame (8..) ...,
+   }
+
+                     Figure 3: 1-RTT protected payload
+
+   The SID field contains the SID of the source symbol contained in the
+   packet.
+
+4.  Security Considerations
 
    TODO Security
 
-6.  IANA Considerations
+5.  IANA Considerations
 
    This document has no IANA actions.
 
-7.  References
+6.  References
 
-7.1.  Normative References
-
-   [QUIC]     Iyengar, J., Ed. and M. Thomson, Ed., "QUIC: A UDP-Based
-              Multiplexed and Secure Transport", RFC 9000,
-              DOI 10.17487/RFC9000, May 2021,
-              <https://www.rfc-editor.org/rfc/rfc9000>.
+6.1.  Normative References
 
    [QUIC-RECOVERY]
               Iyengar, J., Ed. and I. Swett, Ed., "QUIC Loss Detection
               and Congestion Control", RFC 9002, DOI 10.17487/RFC9002,
               May 2021, <https://www.rfc-editor.org/rfc/rfc9002>.
+
+   [QUICv1]   Iyengar, J., Ed. and M. Thomson, Ed., "QUIC: A UDP-Based
+              Multiplexed and Secure Transport", RFC 9000,
+              DOI 10.17487/RFC9000, May 2021,
+              <https://www.rfc-editor.org/rfc/rfc9000>.
 
    [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
               Requirement Levels", BCP 14, RFC 2119,
@@ -224,7 +255,7 @@ Table of Contents
               2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,
               May 2017, <https://www.rfc-editor.org/rfc/rfc8174>.
 
-7.2.  Informative References
+6.2.  Informative References
 
    [FlEC]     Michel, F., Cohen, A., Malak, D., Coninck, Q., Medard, M.,
               and O. Bonaventure, "FlEC: Enhancing QUIC With
