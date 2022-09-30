@@ -30,7 +30,7 @@ author:
     email: "francois.michel@uclouvain.be"
 
 normative:
-  QUIC: RFC9000
+  QUICv1: RFC9000
   QUIC-RECOVERY: RFC9002
 
 informative:
@@ -52,7 +52,7 @@ through the network.
 
 # Introduction
 
-QUIC version 1 {{QUIC}} does not retransmit neither frames nor packets
+QUIC version 1 {{QUICv1}} does not retransmit neither frames nor packets
 upon network losses. Instead, the lost information is sent again in
 new frames carried by new packets. Retransmitting the lost information
 requires the loss recovery mechanism to identify lost packets which
@@ -77,30 +77,6 @@ packet losses prior to loss detection.
 # The network channel VS the coding channel
 
 TODO
-
-# Sending redundancy with the QUIC protocol
-
-Forward Erasure Correction is not the only possible mechanism to send
-redundant information with QUIC: QUIC already sends acknowledgements
-redundantly with cumulative acknowledgements and ACK blocks repeated
-until they are acked by the peer. If an ACK frame is lost, the
-acknowledged packets can be retrieved. On the other hand,
-repeating the payload of STREAM or DATAGRAM frames will have a large
-negative impact on bandwidth. FEC and network coding allow sending
-more efficiently redundancy to protect data from losses.
-
-## Example {-}
-
-A simple and suboptimal FEC technique can be implemented using a XOR
-operation between all the informations chunks whose retransmission
-should be avoided. Let P1, P2 and P3 be three pieces of information of
-the same sizesent on the wire. The repair symbol R can be defined like
-the following :
-
-    R = P1 XOR P2 XOR P3
-
-Such that the loss of any of P1, P2 or P3 can be recovered by XORing
-the two remaining pieces of information with R.
 
 ## Protocol requirements for protecting information through FEC
 
@@ -141,19 +117,72 @@ the payload of some packets if they do not carry latency-sensitive
 information. It is thus required to uniquely identify the source symbols
 so that the decoder can point the lost source symbol by looking at the
 received source symbols only. Source symbols are thus attributed a Symbol
-ID (SID). As the QUIC packet number cannot be used to carry the SID, this
-information must be transmitted using either a dedicated QUIC frame or a
-dedicated header field. The following sections discuss the two alternatives.
+ID (SID). The SID of first source symbol MUST be zero and increase by
+exactly one for every new source symbol. As the QUIC packet number cannot
+be used to carry the SID, this information must be transmitted using either
+a dedicated QUIC frame or a dedicated header field. The following sections
+discuss the two alternatives.
 
 #### Alternative 1: sending the SID inside a frame
 
-TODO
+This alternative is compatible with {{QUICv1}}. It defines a new SID frame
+as shown in {{fig-sid-frame}}.
 
-#### Alternative 2: sending the SID using a packet header field
+~~~~
+SID {
+  SID (i),
+}
+~~~~
+{: #fig-sid-frame title="SID frame format"}
 
+A QUIC packet carrying an SID frame means that the frames of that packet
+are part of a FEC source symbol. The SID of this symbol is represented by
+the only field of the SID frame. A packet cannot contain more than one SID
+frame. A packet whose payload is FEC-protected MUST contain a SID frame
+whose SID field is the SID of the related source symbol. This alternative
+has one drawback: the SID frame is related to its containing packet.
+The SID frame is thus not idempotent.
 
+#### Alternative 2: sending the SID and the protected frames inside a frame
 
+This alternative is compatible with {{QUICv1}}. It defines a new
+SOURCE_SYMBOL frame as shown in {{fig-source-symbol}}.
 
+~~~~
+SOURCE_SYMBOL {
+  SID (i),
+  FEC Protected Payload (..)
+}
+~~~~
+{: #fig-source-symbol title="SOURCE_SYMBOL frame format"}
+
+The frame explicitly represents a SOURCE_SYMBOL. The FEC Protected Payload
+field is analogous to the payload of a QUIC packet: it contains a
+sequence of frames that are protected by FEC. The SOURCE_SYMBOL frame
+contains frames just as QUIC packets do. The advantage of this approach
+is that the SOURCE_SYMBOL frame is idempotent: it is not related to
+its containing packet as it describes clearly the frames inside the source
+symbol. The main drawback is that existing QUIC implementations are not
+used to write frames inside other frames which may increase the
+implementation cost of the approach.
+
+#### Alternative 3 (thrash ?): sending the SID using a packet header field
+
+This alternative is not compatible with {{QUICv1}} and requires a new
+protocol version. It defines a new short header field that is part
+of the 1-RTT protected payload. The 1-RTT packet payload is redefined
+as shown in {{fig-fec-packet-payload}}.
+
+~~~~
+Packet Payload {
+  SID (i),
+  Frame (8..) ...,
+}
+~~~~
+{: #fig-fec-packet-payload title="1-RTT protected payload"}
+
+The SID field contains the SID of the source symbol contained in the
+packet.
 
 # Security Considerations
 
