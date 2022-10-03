@@ -4,8 +4,8 @@
 
 QUIC                                                           F. Michel
 Internet-Draft                                                 UCLouvain
-Intended status: Informational                         30 September 2022
-Expires: 3 April 2023
+Intended status: Informational                            3 October 2022
+Expires: 6 April 2023
 
 
            Forward Erasure Correction for QUIC loss recovery
@@ -49,7 +49,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 3 April 2023.
+   This Internet-Draft will expire on 6 April 2023.
 
 Copyright Notice
 
@@ -69,11 +69,16 @@ Table of Contents
 
    1.  Introduction
    2.  Conventions and Definitions
-   3.  The network channel VS the coding channel
+     2.1.  FEC-related definitions
+   3.  The network channel and the coding channel
      3.1.  Protocol requirements for protecting information through
            FEC
        3.1.1.  Defining the content of source symbols
        3.1.2.  Identifying the source symbols
+       3.1.3.  Sending the repair symbols
+       3.1.4.  Announcing the coding window size
+       3.1.5.  Announcing the recovered symbols
+     3.2.  Coding channel and congestion control
    4.  Security Considerations
    5.  IANA Considerations
    6.  References
@@ -93,9 +98,9 @@ Table of Contents
    applications running QUIC could not afford such a waiting time to
    ensure a good quality of experience to their users.
 
-   Several works have already been performed to consider the use of
-   Forward Erasure Correction for the QUIC protocol to ensure timely
-   data delivery for delay-sensitive applications [QUIC-FEC] [FlEC]
+   Works has already been done to consider the use of Forward Erasure
+   Correction for the QUIC protocol to ensure timely data delivery for
+   delay-sensitive applications [QUIC-FEC] [FlEC]
    [I-D.swett-nwcrg-coding-for-quic].  This documents lists the required
    additions to the QUIC protocol to extend its loss recovery mechanism
    and make it able to recover from packet losses prior to loss
@@ -109,9 +114,103 @@ Table of Contents
    BCP 14 [RFC2119] [RFC8174] when, and only when, they appear in all
    capitals, as shown here.
 
-3.  The network channel VS the coding channel
+2.1.  FEC-related definitions
 
-   TODO
+   Source symbol: piece of information exchanged by two endpoints.
+
+   Repair symbol: redundant information constructed from the combination
+   or several source symbols.
+
+   Erasure: loss of one or more entire symbols
+
+   Erasure correction code: algorithm combining one or several source
+   symbols to produce repair symbols and reconstructing source symbols
+   from a given set of source and repair symbols.
+
+   Forward Erasure Correction: process of recovering erased symbols
+   prior their erasure has been identified.
+
+   Encoder: entity producing repair symbols using an error correction
+   code.  The encoder can be a library used by the protocol
+   implementation or a program running in a separate process or machine.
+
+   Decoder: entity reconstructing missing source symbols from received
+   source and repair symbols.  The decoder can be a library used by the
+   protocol implementation or a program running in a separate process or
+   machine.
+
+3.  The network channel and the coding channel
+
+   Regular QUIC endpoints exchange information over a network channel.
+   Adding Forward Erasure Correction to QUIC enables an enpoint to
+   receive information over a coding channel.  A coding channel can be
+   seen as a communication channel between a QUIC endpoint and a FEC
+   decoder.  The decoder often runs on the same machine as the QUIC
+   receiver and can even be part of the protocol implementation itself.
+   A source symbol is received through the coding channel when it is
+   recovered by the FEC decoder instead of being explicitly received
+   through the network.  Only the data sent on the network channel are
+   really transmitted on the wire.  Figure 1 illustrates how symbols can
+   be received from both channels.
+
+               Network Channel              Coding Channel
+
+   Sender                         Receiver               Decoder
+     |                                |                    |
+     |  PACKET(1)[SOURCE_SYMBOL(1)]   |                    |
+     |------------------------------->|  SOURCE_SYMBOL(1)  |
+     |                                |------------------->|
+     |  PACKET(2)[SOURCE_SYMBOL(2)]   |                    |
+     |--------------x                 |                    |
+     |                                |                    |
+     |  PACKET(3)[REPAIR_SYMBOL]      |                    |
+     |------------------------------->|    REPAIR_SYMBOL   |
+     |                                |------------------->|
+     |                                |                    |(recomputes)
+     |                                |                    |(the source)
+     |                                |                    |(symbol    )
+     |                                |  SOURCE_SYMBOL(2)  |
+     |                                |<-------------------|
+     |                                |                    |
+     |                                |                    |
+
+          Figure 1: Receiving symbols through the network channel
+
+              !!!! OLD FIGURE: which one is best ? !!!!
+                             !Network loss!
+
+                                     /
+              +----------+   +------/---+   +----------+
+              |  Pkt 3   |   |  Pkt/2   |   |  Pkt 1   |
+              |  Repair  |   |  So/urce |   |  Source  |
+              |  Symbol  |   | Sy/mbol 2|   | Symbol 1 |
+              +----------+   +--/-------+   +----------+
+   +========+                  /                          +==========+
+   | Sender |-------------------------------------------> | Receiver |
+   +========+                                             +==========+
+                                                         ^
+                                                        /
+                           Coding Channel              /
+                    _    _   _  _ _ _ _______________ /
+
+                          +----------+ ( Recomputed by combining )
+                          |  Source  | (     Source Symbol 1     )
+                          | Symbol 2 | (    and Repair Symbol    )
+                          +----------+
+
+          Figure 2: Receiving packets through the network channel
+
+   In this illustration, the sender sends three QUIC packets through the
+   network channel.  Packets 1 and 2 carry one source symbol each and
+   the packet 3 contains carries one repair symbol protecting the two
+   source symbols.  Packet 2 is lost due to network imperfection
+   preventing Source Symbol 2 from being received through the network
+   channel.  The FEC decoder reconstructs Source Symbol 2 by combining
+   Source Symbol 1 and Repair Symbol.  Source Symbol 2 is thus received
+   through the coding channel.  Note that Source Symbol 2 is not
+   received as a packet since QUIC packets are only exchanged through
+   the network channel.  On the other hand, source symbols can be
+   received from both the network and coding channels.
 
 3.1.  Protocol requirements for protecting information through FEC
 
@@ -165,13 +264,13 @@ Table of Contents
 3.1.2.1.  Alternative 1: sending the SID inside a frame
 
    This alternative is compatible with [QUICv1].  It defines a new SID
-   frame as shown in Figure 1.
+   frame as shown in Figure 3.
 
    SID {
      SID (i),
    }
 
-                         Figure 1: SID frame format
+                         Figure 3: SID frame format
 
    A QUIC packet carrying an SID frame means that the frames of that
    packet are part of a FEC source symbol.  The SID of this symbol is
@@ -186,14 +285,14 @@ Table of Contents
           a frame
 
    This alternative is compatible with [QUICv1].  It defines a new
-   SOURCE_SYMBOL frame as shown in Figure 2.
+   SOURCE_SYMBOL frame as shown in Figure 4.
 
    SOURCE_SYMBOL {
      SID (i),
      FEC Protected Payload (..)
    }
 
-                    Figure 2: SOURCE_SYMBOL frame format
+                    Figure 4: SOURCE_SYMBOL frame format
 
    The frame explicitly represents a SOURCE_SYMBOL.  The FEC Protected
    Payload field is analogous to the payload of a QUIC packet: it
@@ -212,17 +311,91 @@ Table of Contents
    This alternative is not compatible with [QUICv1] and requires a new
    protocol version.  It defines a new short header field that is part
    of the 1-RTT protected payload.  The 1-RTT packet payload is
-   redefined as shown in Figure 3.
+   redefined as shown in Figure 5.
 
    Packet Payload {
      SID (i),
      Frame (8..) ...,
    }
 
-                     Figure 3: 1-RTT protected payload
+                     Figure 5: 1-RTT protected payload
 
    The SID field contains the SID of the source symbol contained in the
    packet.
+
+3.1.3.  Sending the repair symbols
+
+   The REPAIR symbols and the metadata attached to it are transferred
+   using the REPAIR frame shown in Figure 6.
+
+   REPAIR {
+     FEC Scheme Specific Repair Payload (1..),
+   }
+
+                       Figure 6: REPAIR frame format
+
+   The payload of the REPAIR frame is specific to the underlying
+   erasure-correcting code.  In addition to the repair symbol itself, it
+   may contain any metadata needed by the erasure-correcting code (e.g.
+   identifying the source symbols protected by the repair symbol carried
+   in the frame).  Depending on the underlying FEC scheme, the REPAIR
+   frame MAY contain only a part of a repair symbol.
+
+3.1.4.  Announcing the coding window size
+
+   The receiver needs to store the received symbols in order to recover
+   the lost source symbols.  The FEC_WINDOW frame is sent by the symbols
+   receiver to announce the number of symbols that can be stored
+   simultaneously by the receiver at a given point of time.  The format
+   of the FEC_WINDOW frame is described in Figure 7.
+
+   FEC_WINDOW {
+     Window Epoch (i),
+     Window Size (i),
+   }
+
+                     Figure 7: FEC_WINDOW frame format
+
+   The Window Epoch field is a unique identifier increasing by exactly
+   one for each new FEC_WINDOW frame sent by the FEC receiver.
+
+   The Window Size field indicates the number of symbols that can be
+   stored simultaneously by the receiver.  The Window Size value
+   overrides the the window sizes received for smaller window epochs.
+
+3.1.5.  Announcing the recovered symbols
+
+   The FEC receiver MAY advertise the source symbols that have been
+   received either through the network or using FEC to avoid the sender
+   retransmitting the data of the recovered source symbols.  This can be
+   done using the SYMBOL_ACK frame as shown in Figure 8.
+
+   SYMBOL_ACK {
+     Largest Acknowledged (i),
+     ACK Range Count (i),
+     First ACK Range (i),
+     ACK Range (..) ...,
+   }
+
+                     Figure 8: SYMBOL_ACK frame format
+
+   The frame has a similar format to the ACK frame.  In addition to
+   symbols recovered by FEC, this frame MAY also announce symbols
+   received regularly through the network to avoid gaps in the ACK
+   ranges and reduce the frame size.  There is no obligation for a FEC
+   receiver to send SYMBOL_ACK frames.  The FEC receiver MAY decide to
+   only advertize a subset of the received source symbols.  The
+   SYMBOL_ACK frame MUST NOT be used to infer any congestion state on
+   the network (see Section 3.2).
+
+3.2.  Coding channel and congestion control
+
+   The coding and network channels being unrelated, the fact of
+   receiving symbols through the coding channel MUST NOT be used to
+   infer any congestion state on the network channel.  Especially,
+   receiving a symbol through the coding channel MUST NOT be used to
+   hide the network loss event of the corresponding packet to the
+   congestion control, applying Recommandation 1 of [RFC9265].
 
 4.  Security Considerations
 
@@ -254,6 +427,11 @@ Table of Contents
    [RFC8174]  Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
               2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,
               May 2017, <https://www.rfc-editor.org/rfc/rfc8174>.
+
+   [RFC9265]  Kuhn, N., Lochin, E., Michel, F., and M. Welzl, "Forward
+              Erasure Correction (FEC) Coding and Congestion Control in
+              Transport", RFC 9265, DOI 10.17487/RFC9265, July 2022,
+              <https://www.rfc-editor.org/rfc/rfc9265>.
 
 6.2.  Informative References
 
