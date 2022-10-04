@@ -1214,23 +1214,31 @@ through the network.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9">
             <p id="section-toc.1-1.9.1"><a href="#section-9" class="auto internal xref">9</a>.  <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
-</li>
-          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10">
-            <p id="section-toc.1-1.10.1"><a href="#section-10" class="auto internal xref">10</a>. <a href="#name-references" class="internal xref">References</a></p>
 <ul class="compact toc ulBare ulEmpty">
-<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.1">
-                <p id="section-toc.1-1.10.2.1.1"><a href="#section-10.1" class="auto internal xref">10.1</a>.  <a href="#name-normative-references" class="internal xref">Normative References</a></p>
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.1">
+                <p id="section-toc.1-1.9.2.1.1"><a href="#section-9.1" class="auto internal xref">9.1</a>.  <a href="#name-new-transport-parameters" class="internal xref">New transport parameters</a></p>
 </li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.2">
-                <p id="section-toc.1-1.10.2.2.1"><a href="#section-10.2" class="auto internal xref">10.2</a>.  <a href="#name-informative-references" class="internal xref">Informative References</a></p>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.2">
+                <p id="section-toc.1-1.9.2.2.1"><a href="#section-9.2" class="auto internal xref">9.2</a>.  <a href="#name-new-frames" class="internal xref">New frames</a></p>
 </li>
             </ul>
 </li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10">
+            <p id="section-toc.1-1.10.1"><a href="#section-10" class="auto internal xref"></a><a href="#name-acknowledgments" class="internal xref">Acknowledgments</a></p>
+</li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11">
-            <p id="section-toc.1-1.11.1"><a href="#appendix-A" class="auto internal xref"></a><a href="#name-acknowledgments" class="internal xref">Acknowledgments</a></p>
+            <p id="section-toc.1-1.11.1"><a href="#section-11" class="auto internal xref"></a><a href="#name-references" class="internal xref">References</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.1">
+                <p id="section-toc.1-1.11.2.1.1"><a href="#section-11.1" class="auto internal xref"></a><a href="#name-normative-references" class="internal xref">Normative References</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.2">
+                <p id="section-toc.1-1.11.2.2.1"><a href="#section-11.2" class="auto internal xref"></a><a href="#name-informative-references" class="internal xref">Informative References</a></p>
+</li>
+            </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12">
-            <p id="section-toc.1-1.12.1"><a href="#appendix-B" class="auto internal xref"></a><a href="#name-authors-address" class="internal xref">Author's Address</a></p>
+            <p id="section-toc.1-1.12.1"><a href="#appendix-A" class="auto internal xref"></a><a href="#name-authors-address" class="internal xref">Author's Address</a></p>
 </li>
         </ul>
 </nav>
@@ -1546,7 +1554,7 @@ format are the same.<a href="#section-5.2.2-5" class="pilcrow">¶</a></p>
 </div>
 </section>
 </div>
-<div id="sending-the-repair-symbols">
+<div id="sec-repair-frame">
 <section id="section-5.3">
         <h3 id="name-sending-the-repair-symbols">
 <a href="#section-5.3" class="section-number selfRef">5.3. </a><a href="#name-sending-the-repair-symbols" class="section-name selfRef">Sending the repair symbols</a>
@@ -1574,7 +1582,7 @@ Depending on the underlying FEC scheme, the REPAIR frame <span class="bcp14">MAY
 only a part of a repair symbol.<a href="#section-5.3-3" class="pilcrow">¶</a></p>
 </section>
 </div>
-<div id="sec-coding-window">
+<div id="sec-fec-window-frame">
 <section id="section-5.4">
         <h3 id="name-announcing-the-coding-windo">
 <a href="#section-5.4" class="section-number selfRef">5.4. </a><a href="#name-announcing-the-coding-windo" class="section-name selfRef">Announcing the coding window size</a>
@@ -1605,7 +1613,7 @@ simultaneously by the receiver. The Window Size value overrides the
 the window sizes received for smaller window epochs.<a href="#section-5.4-4" class="pilcrow">¶</a></p>
 </section>
 </div>
-<div id="announcing-the-recovered-symbols">
+<div id="sec-symbol-ack-frame">
 <section id="section-5.5">
         <h3 id="name-announcing-the-recovered-sy">
 <a href="#section-5.5" class="section-number selfRef">5.5. </a><a href="#name-announcing-the-recovered-sy" class="section-name selfRef">Announcing the recovered symbols</a>
@@ -1660,14 +1668,14 @@ the congestion control, applying Recommandation 1 of <span>[<a href="#RFC9265" c
       </h2>
 <p id="section-7-1">This section defines the new transport parameters used to negociate and
 parametrize the FEC extension described in this document.<a href="#section-7-1" class="pilcrow">¶</a></p>
-<div id="enablefec-0xfec">
+<div id="sec-enable-fec-tp">
 <section id="section-7.1">
         <h3 id="name-enable_fec-0xfec">
 <a href="#section-7.1" class="section-number selfRef">7.1. </a><a href="#name-enable_fec-0xfec" class="section-name selfRef">enable_fec (0xfec)</a>
         </h3>
 <p id="section-7.1-1">The use of the FEC extension is negociated using the enable_fec transport
-parameter defined in <a href="#param_value_definition" class="auto internal xref">Table 1</a> :<a href="#section-7.1-1" class="pilcrow">¶</a></p>
-<span id="name-values-for-enable_fec"></span><div id="param_value_definition">
+parameter defined in <a href="#enable-fec-transport-parameter" class="auto internal xref">Table 1</a> :<a href="#section-7.1-1" class="pilcrow">¶</a></p>
+<span id="name-values-for-enable_fec"></span><div id="enable-fec-transport-parameter">
 <table class="center" id="table-1">
           <caption>
 <a href="#table-1" class="selfRef">Table 1</a>:
@@ -1696,7 +1704,7 @@ the QUIC endpoint <span class="bcp14">MUST NOT</span> use any frame or mechanism
 document.<a href="#section-7.1-3" class="pilcrow">¶</a></p>
 </section>
 </div>
-<div id="decoderfecscheme-0xfecd">
+<div id="sec-decoder-fec-scheme-tp">
 <section id="section-7.2">
         <h3 id="name-decoder_fec_scheme-0xfecd">
 <a href="#section-7.2" class="section-number selfRef">7.2. </a><a href="#name-decoder_fec_scheme-0xfecd" class="section-name selfRef">decoder_fec_scheme (0xfecd)</a>
@@ -1713,14 +1721,14 @@ When the decoder_fec_scheme parameter is not advertized by the peer,
 the QUIC sender <span class="bcp14">MUST NOT</span> send any repair symbol.<a href="#section-7.2-2" class="pilcrow">¶</a></p>
 </section>
 </div>
-<div id="initialcodingwindow-0xfecc">
+<div id="sec-initial-coding-window-tp">
 <section id="section-7.3">
         <h3 id="name-initial_coding_window-0xfec">
 <a href="#section-7.3" class="section-number selfRef">7.3. </a><a href="#name-initial_coding_window-0xfec" class="section-name selfRef">initial_coding_window (0xfecc)</a>
         </h3>
 <p id="section-7.3-1">Each QUIC endpoint uses the initial_coding_window transport parameter to
 define the initial coding window size it uses to store source and repair
-symbols (see <a href="#sec-coding-window" class="auto internal xref">Section 5.4</a>).
+symbols (see <a href="#sec-fec-window-frame" class="auto internal xref">Section 5.4</a>).
 When the initial_coding_window parameter is not advertized by the peer,
 the QUIC sender <span class="bcp14">MUST</span> consider a default value of 0 and <span class="bcp14">MUST NOT</span> send
 any repair symbol.<a href="#section-7.3-1" class="pilcrow">¶</a></p>
@@ -1754,16 +1762,131 @@ to decode it in a reasonable amount of time.<a href="#section-8.1-1" class="pilc
       <h2 id="name-iana-considerations">
 <a href="#section-9" class="section-number selfRef">9. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
       </h2>
-<p id="section-9-1">TODO<a href="#section-9-1" class="pilcrow">¶</a></p>
+<p id="section-9-1">This document defines three new transport parameters and five new frames. The
+SID and SOURCE_SYMBOL frames serve the same purpose. Only one will be removed
+in next versions of this document.<a href="#section-9-1" class="pilcrow">¶</a></p>
+<div id="new-transport-parameters">
+<section id="section-9.1">
+        <h3 id="name-new-transport-parameters">
+<a href="#section-9.1" class="section-number selfRef">9.1. </a><a href="#name-new-transport-parameters" class="section-name selfRef">New transport parameters</a>
+        </h3>
+<span id="name-new-transport-parameters-2"></span><div id="iana-transport-parameters">
+<table class="center" id="table-2">
+          <caption>
+<a href="#table-2" class="selfRef">Table 2</a>:
+<a href="#name-new-transport-parameters-2" class="selfRef">New transport parameters</a>
+          </caption>
+<thead>
+            <tr>
+              <th class="text-left" rowspan="1" colspan="1">Parameter ID</th>
+              <th class="text-left" rowspan="1" colspan="1">Parameter name</th>
+              <th class="text-left" rowspan="1" colspan="1">Specification</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">0xfec</td>
+              <td class="text-left" rowspan="1" colspan="1">enable_fec</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <a href="#sec-enable-fec-tp" class="auto internal xref">Section 7.1</a>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">0xfecd</td>
+              <td class="text-left" rowspan="1" colspan="1">decoder_fec_scheme</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <a href="#sec-decoder-fec-scheme-tp" class="auto internal xref">Section 7.2</a>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">0xfecc</td>
+              <td class="text-left" rowspan="1" colspan="1">initial_coding_window</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <a href="#sec-initial-coding-window-tp" class="auto internal xref">Section 7.3</a>
+</td>
+            </tr>
+          </tbody>
+        </table>
+</div>
 </section>
 </div>
+<div id="new-frames">
+<section id="section-9.2">
+        <h3 id="name-new-frames">
+<a href="#section-9.2" class="section-number selfRef">9.2. </a><a href="#name-new-frames" class="section-name selfRef">New frames</a>
+        </h3>
+<span id="name-new-frames-2"></span><div id="iana-frames">
+<table class="center" id="table-3">
+          <caption>
+<a href="#table-3" class="selfRef">Table 3</a>:
+<a href="#name-new-frames-2" class="selfRef">New frames</a>
+          </caption>
+<thead>
+            <tr>
+              <th class="text-left" rowspan="1" colspan="1">Frame ID</th>
+              <th class="text-left" rowspan="1" colspan="1">Frame name</th>
+              <th class="text-left" rowspan="1" colspan="1">Specification</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">0xfec</td>
+              <td class="text-left" rowspan="1" colspan="1">REPAIR</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <a href="#sec-repair-frame" class="auto internal xref">Section 5.3</a>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">0xfec55</td>
+              <td class="text-left" rowspan="1" colspan="1">SOURCE_SYMBOL</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <a href="#sec-source-symbol-frame" class="auto internal xref">Section 5.2.1</a>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">0xfec1d</td>
+              <td class="text-left" rowspan="1" colspan="1">SID</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <a href="#sec-sid-frame" class="auto internal xref">Section 5.2.2</a>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">0xfecac</td>
+              <td class="text-left" rowspan="1" colspan="1">SYMBOL_ACK</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <a href="#sec-symbol-ack-frame" class="auto internal xref">Section 5.5</a>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">0xfecc0d</td>
+              <td class="text-left" rowspan="1" colspan="1">FEC_WINDOW</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <a href="#sec-fec-window-frame" class="auto internal xref">Section 5.4</a>
+</td>
+            </tr>
+          </tbody>
+        </table>
+</div>
+</section>
+</div>
+</section>
+</div>
+<div id="acknowledgments">
 <section id="section-10">
-      <h2 id="name-references">
-<a href="#section-10" class="section-number selfRef">10. </a><a href="#name-references" class="section-name selfRef">References</a>
+      <h2 id="name-acknowledgments">
+<a href="#name-acknowledgments" class="section-name selfRef">Acknowledgments</a>
       </h2>
-<section id="section-10.1">
+<p id="section-10-1">Maxime Piraux, Olivier Bonaventure and all the authors of
+<span>[<a href="#I-D.swett-nwcrg-coding-for-quic" class="cite xref">I-D.swett-nwcrg-coding-for-quic</a>]</span>.<a href="#section-10-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<section id="section-11">
+      <h2 id="name-references">
+<a href="#name-references" class="section-name selfRef">References</a>
+      </h2>
+<section id="section-11.1">
         <h3 id="name-normative-references">
-<a href="#section-10.1" class="section-number selfRef">10.1. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
+<a href="#name-normative-references" class="section-name selfRef">Normative References</a>
         </h3>
 <dl class="references">
 <dt id="QUIC-RECOVERY">[QUIC-RECOVERY]</dt>
@@ -1788,9 +1911,9 @@ to decode it in a reasonable amount of time.<a href="#section-8.1-1" class="pilc
 <dd class="break"></dd>
 </dl>
 </section>
-<section id="section-10.2">
+<section id="section-11.2">
         <h3 id="name-informative-references">
-<a href="#section-10.2" class="section-number selfRef">10.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
+<a href="#name-informative-references" class="section-name selfRef">Informative References</a>
         </h3>
 <dl class="references">
 <dt id="FlEC">[FlEC]</dt>
@@ -1808,16 +1931,8 @@ to decode it in a reasonable amount of time.<a href="#section-8.1-1" class="pilc
 </dl>
 </section>
 </section>
-<div id="acknowledgments">
-<section id="appendix-A">
-      <h2 id="name-acknowledgments">
-<a href="#name-acknowledgments" class="section-name selfRef">Acknowledgments</a>
-      </h2>
-<p id="appendix-A-1">TODO acknowledge.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
-</section>
-</div>
 <div id="authors-addresses">
-<section id="appendix-B">
+<section id="appendix-A">
       <h2 id="name-authors-address">
 <a href="#name-authors-address" class="section-name selfRef">Author's Address</a>
       </h2>

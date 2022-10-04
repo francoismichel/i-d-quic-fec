@@ -88,10 +88,12 @@ Table of Contents
    8.  Security Considerations
      8.1.  DoS due to difficult symbols recoveries
    9.  IANA Considerations
-   10. References
-     10.1.  Normative References
-     10.2.  Informative References
+     9.1.  New transport parameters
+     9.2.  New frames
    Acknowledgments
+   References
+     Normative References
+     Informative References
    Author's Address
 
 1.  Introduction
@@ -488,11 +490,50 @@ Table of Contents
 
 9.  IANA Considerations
 
-   TODO
+   This document defines three new transport parameters and five new
+   frames.  The SID and SOURCE_SYMBOL frames serve the same purpose.
+   Only one will be removed in next versions of this document.
 
-10.  References
+9.1.  New transport parameters
 
-10.1.  Normative References
+         +==============+=======================+===============+
+         | Parameter ID | Parameter name        | Specification |
+         +==============+=======================+===============+
+         | 0xfec        | enable_fec            | Section 7.1   |
+         +--------------+-----------------------+---------------+
+         | 0xfecd       | decoder_fec_scheme    | Section 7.2   |
+         +--------------+-----------------------+---------------+
+         | 0xfecc       | initial_coding_window | Section 7.3   |
+         +--------------+-----------------------+---------------+
+
+                    Table 2: New transport parameters
+
+9.2.  New frames
+
+               +==========+===============+===============+
+               | Frame ID | Frame name    | Specification |
+               +==========+===============+===============+
+               | 0xfec    | REPAIR        | Section 5.3   |
+               +----------+---------------+---------------+
+               | 0xfec55  | SOURCE_SYMBOL | Section 5.2.1 |
+               +----------+---------------+---------------+
+               | 0xfec1d  | SID           | Section 5.2.2 |
+               +----------+---------------+---------------+
+               | 0xfecac  | SYMBOL_ACK    | Section 5.5   |
+               +----------+---------------+---------------+
+               | 0xfecc0d | FEC_WINDOW    | Section 5.4   |
+               +----------+---------------+---------------+
+
+                           Table 3: New frames
+
+Acknowledgments
+
+   Maxime Piraux, Olivier Bonaventure and all the authors of
+   [I-D.swett-nwcrg-coding-for-quic].
+
+References
+
+Normative References
 
    [QUIC-RECOVERY]
               Iyengar, J., Ed. and I. Swett, Ed., "QUIC Loss Detection
@@ -518,7 +559,7 @@ Table of Contents
               Transport", RFC 9265, DOI 10.17487/RFC9265, July 2022,
               <https://www.rfc-editor.org/rfc/rfc9265>.
 
-10.2.  Informative References
+Informative References
 
    [FlEC]     Michel, F., Cohen, A., Malak, D., Coninck, Q., Medard, M.,
               and O. Bonaventure, "FlEC: Enhancing QUIC With
@@ -539,10 +580,6 @@ Table of Contents
               QUIC", 2019 IFIP Networking Conference (IFIP Networking),
               DOI 10.23919/ifipnetworking.2019.8816838, May 2019,
               <https://doi.org/10.23919/ifipnetworking.2019.8816838>.
-
-Acknowledgments
-
-   TODO acknowledge.
 
 Author's Address
 
