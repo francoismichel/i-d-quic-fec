@@ -323,6 +323,7 @@ format are the same.
 
 
 ## Sending the repair symbols
+{: #sec-repair-frame}
 
 The REPAIR symbols and the metadata attached to it are transferred using
 the REPAIR frame shown in {{fig-fec-repair-frame}}.
@@ -343,7 +344,7 @@ only a part of a repair symbol.
 
 
 ## Announcing the coding window size
-{: #sec-coding-window}
+{: #sec-fec-window-frame}
 
 The receiver needs to store the received symbols in order to recover the
 lost source symbols. The FEC_WINDOW frame is sent by the symbols receiver
@@ -368,6 +369,7 @@ the window sizes received for smaller window epochs.
 
 
 ## Announcing the recovered symbols
+{: #sec-symbol-ack-frame}
 
 The FEC receiver MAY advertise the source symbols that have been received
 either through the network or using FEC to avoid the sender retransmitting
@@ -410,14 +412,16 @@ parametrize the FEC extension described in this document.
 
 
 ## enable_fec (0xfec)
+{: #sec-enable-fec-tp}
+
 The use of the FEC extension is negociated using the enable_fec transport
-parameter defined in {{param_value_definition}} :
+parameter defined in {{enable-fec-transport-parameter}} :
 
 Option | Definition
 ---------|---------------------------------------
 0x0      | don't support FEC
 0x1      | supports FEC as defined in this document
-{: #param_value_definition title="Values for enable_fec"}
+{: #enable-fec-transport-parameter title="Values for enable_fec"}
 
 When the enable_fec value is 0 or is not advertized by the peer,
 the QUIC endpoint MUST NOT use any frame or mechanism described in this
@@ -425,6 +429,7 @@ document.
 
 
 ## decoder_fec_scheme (0xfecd)
+{: #sec-decoder-fec-scheme-tp}
 
 Each QUIC endpoint uses the decoder_fec_scheme transport parameter to
 define the FEC scheme used to decode the received repair symbols. The
@@ -440,10 +445,11 @@ the QUIC sender MUST NOT send any repair symbol.
 
 
 ## initial_coding_window (0xfecc)
+{: #sec-initial-coding-window-tp}
 
 Each QUIC endpoint uses the initial_coding_window transport parameter to
 define the initial coding window size it uses to store source and repair
-symbols (see {{sec-coding-window}}).
+symbols (see {{sec-fec-window-frame}}).
 When the initial_coding_window parameter is not advertized by the peer,
 the QUIC sender MUST consider a default value of 0 and MUST NOT send
 any repair symbol.
@@ -464,12 +470,35 @@ to decode it in a reasonable amount of time.
 
 # IANA Considerations
 
-TODO
+This document defines three new transport parameters and five new frames. The
+SID and SOURCE_SYMBOL frames serve the same purpose. Only one will be removed
+in next versions of this document.
 
 
---- back
+## New transport parameters
+
+Parameter ID | Parameter name | Specification
+---------|---------------------------------------
+0xfec    | enable_fec             | {{sec-enable-fec-tp}}
+0xfecd   | decoder_fec_scheme     | {{sec-decoder-fec-scheme-tp}}
+0xfecc   | initial_coding_window  | {{sec-initial-coding-window-tp}}
+{: #iana-transport-parameters title="New transport parameters"}
+
+
+## New frames
+
+Frame ID | Frame name | Specification
+---------|---------------------------------------
+0xfec    | REPAIR          | {{sec-repair-frame}}
+0xfec55  | SOURCE_SYMBOL   | {{sec-source-symbol-frame}}
+0xfec1d  | SID             | {{sec-sid-frame}}
+0xfecac  | SYMBOL_ACK      | {{sec-symbol-ack-frame}}
+0xfecc0d | FEC_WINDOW      | {{sec-fec-window-frame}}
+{: #iana-frames title="New frames"}
 
 # Acknowledgments
 {:numbered="false"}
 
-TODO acknowledge.
+Maxime Piraux, Olivier Bonaventure and all the authors of
+{{I-D.swett-nwcrg-coding-for-quic}}.
+
