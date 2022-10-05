@@ -66,9 +66,9 @@ Works has already been done to consider the use of
 Forward Erasure Correction for the QUIC protocol to ensure timely
 data delivery for delay-sensitive applications {{QUIC-FEC}} {{FlEC}}
 {{I-D.swett-nwcrg-coding-for-quic}}.
-This documents lists the required additions to the QUIC protocol to
-extend its loss recovery mechanism and make it able to recover from
-packet losses prior to loss detection.
+This document defines additions to the QUIC protocol to extend its
+loss recovery mechanism and make it able to recover from packet
+losses prior to loss detection.
 
 
 # Conventions and Definitions
@@ -80,29 +80,28 @@ packet losses prior to loss detection.
 Source symbol: piece of information exchanged by two endpoints.
 
 Repair symbol: redundant information constructed from the combination
-or several source symbols.
+of several source symbols.
 
 Erasure: loss of one or more entire symbols
 
-Erasure correction code: algorithm combining one or several source
-symbols to produce repair symbols and reconstructing source symbols
-from a given set of source and repair symbols.
+Erasure correction code: algorithm generating repair symbols and
+reconstructing missing source symbols from a set of source and
+repair symbols.
 
 Forward Erasure Correction: process of recovering erased symbols prior
-their erasure has been identified.
+to the detection of their erasure.
 
 FEC scheme: the conjunction of an erasure correction code and its
-specific protocol elements required to use this erasure correction code
-within the design described in this document.
+specific protocol elements required to use it with the design
+described in this document.
 
-Encoder: entity producing repair symbols using an error correction code.
+Encoder: entity producing repair symbols using an erasure correction code.
 The encoder can be a library used by the protocol implementation or a
 program running in a separate process or machine.
 
-Decoder: entity reconstructing missing source symbols from received source
-and repair symbols.
-The decoder can be a library used by the protocol implementation or a
-program running in a separate process or machine.
+Decoder: entity reconstructing missing source symbols using an erasure
+correction code. The decoder can be a library used by the protocol
+implementation or a program running in a separate process or machine.
 
 
 # The network channel and the coding channel
@@ -147,15 +146,15 @@ the network channel"}
 
 In this illustration, the sender sends three QUIC packets through the
 network channel. Packets 1 and 2 carry one source symbol each
-and the packet 3 contains carries one repair symbol protecting the
+and the packet 3 carries one repair symbol protecting the
 two source symbols. Packet 2 is lost due to network imperfection
-preventing Source Symbol 2 from being received through the network
-channel. The FEC decoder reconstructs Source Symbol 2 by combining
-Source Symbol 1 and Repair Symbol. Source Symbol 2 is thus received
-through the coding channel. Note that Source Symbol 2 is not received
+preventing SOURCE_SYMBOL(2) from being received through the network
+channel. The FEC decoder reconstructs SOURCE_SYMBOL(2) by combining
+SOURCE_SYMBOL(1) and REPAIR_SYMBOL. SOURCE_SYMBOL(2) is thus received
+through the coding channel. Note that SOURCE_SYMBOL(2) is not received
 as a packet since QUIC packets are only exchanged through the network
 channel. On the other hand, source symbols can be received from both
-the network and coding channels.
+the network (inside QUIC packets) and coding channels.
 
 
 # FEC and the loss recovery mechanism
@@ -172,11 +171,10 @@ data delivery.
 # Protocol requirements for protecting information through FEC
 
 In this section, we list the points that must be defined by the protocol
-for allowing QUIC endpoints to protect information using FEC in a more
-efficient way than duplicating the information sent on the wire.
+for allowing QUIC endpoints to protect information using FEC.
 
 
-## Defining the content of source symbols
+## Defining the FEC-protected parts of a QUIC payload
 
 There is no need to protect every piece information sent on the wire by
 QUIC. Some pieces of information are already sent redundantly (e.g. ACKs)
@@ -192,33 +190,35 @@ complicated and requires more signaling in a multi-stream scenario. It also
 cannot handle the protection of DATAGRAM frames payload.
 In this document, we propose to consider whole frames as part of the source
 symbols. Source symbols are thus the counterpart to QUIC packets for the
-coding channel: packets carry frames through the network channel while
+coding channel. Packets carry frames through the network channel while
 source symbols carry frames through the coding channel. In order to reduce
 signalling between the peers, a single source symbol MUST NOT contain the
 frames of several QUIC packets at the same time.
 
 
-## Identifying the source symbols
+## Identifying the source symbols from QUIC packets
 
-In order to recover lost source symbols, the decoder needs to know how many
-and which source symbols were lost. From the receiver viewpoint, it is not
-possible to distinguish a lost packet from a packet that has never been
-sent as QUIC does not enforce the sending of packets with a contiguously
-increasing packet number. Furthermore a QUIC sender may not want to protect
+Upon reception of a QUIC packet, a receiver needs to identify the source
+symbols carried by the packet to forward it to the FEC decoder.
+The decoder also needs to know which source symbols were lost. Since QUIC
+does not enforce sending contiguously increasing packet numbers, it is not
+possible for a receiver to distinguish a lost packet from a packet that
+has never been sent. Furthermore, a QUIC sender may not want to protect
 the payload of some packets if they do not carry latency-sensitive
-information. It is thus required to uniquely identify the source symbols
-so that the decoder can point the lost source symbol by looking at the
-received source symbols only. Source symbols are thus attributed a Symbol
-ID (SID). The SID of first source symbol MUST be zero and increase by
-exactly one for every new source symbol. As the QUIC packet number cannot
-be used to carry the SID, this information must be transmitted using either
-a dedicated QUIC frame or a dedicated header field. The second solution being
-incompatible with {{QUICv1}}, it is not discussed in this document.
-The source symbols transmitted through the network channel are carried by
-QUIC packets. The source symbol payload can either be put inside
-a dedicated frame ({{sec-source-symbol-frame}}) or infered when handling
-a specific frame ({{sec-sid-frame}}). Both alternatives lead to the exact
-same packet wire format and outcome.
+information. Source symbols are thus attributed a Symbol ID (SID). The
+SID of the first source symbol MUST be zero and the SIDs are contiguously
+increasing. When a FEC decoder notes gaps in the received SIDs,
+the missing SIDs correspond to lost source symbols that can be
+recovered using FEC.
+
+As the QUIC packet number cannot be used to carry the SID, it must
+be transmitted using either a dedicated QUIC frame or a dedicated
+header field. The second solution being incompatible with {{QUICv1}},
+it is not discussed in this document. The source
+symbol payload can either be put inside a dedicated frame
+({{sec-source-symbol-frame}}) or infered when handling a specific frame
+({{sec-sid-frame}}). Both alternatives lead to the exact same packet
+wire format and outcome.
 
 
 ### Alternative 1: sending the source symbol inside a frame
@@ -235,16 +235,14 @@ SOURCE_SYMBOL {
 ~~~~
 {: #fig-source-symbol title="SOURCE_SYMBOL frame format"}
 
-The frame explicitly represents a SOURCE_SYMBOL. The FEC Protected Payload
+The frame explicitly represents a source symbol. The FEC Protected Payload
 field is analogous to the payload of a QUIC packet: it contains a
 sequence of frames that are protected by FEC. The SOURCE_SYMBOL frame
-contains frames just as QUIC packets do. The advantage of this approach
-is that the SOURCE_SYMBOL frame is idempotent: it is not related to
-its containing packet as it describes clearly the frames inside the source
-symbol. The main drawback is that existing QUIC implementations are not
-used to write frames inside other frames which may increase the
-implementation cost of the approach. An example of the use of the
-SOURCE_SYMBOL frame is shown in {{fig-sid-frame-example}}.
+is idempotent and explicit: it exactly describes the frames inside the
+source symbol. The main drawback is that existing QUIC implementations
+are not used to write frames inside other frames which may increase
+the implementation cost of the approach. An example of the use of the
+SOURCE_SYMBOL frame is shown in {{fig-source-symbol-frame-example}}.
 
 
 ~~~~
@@ -291,10 +289,10 @@ SID {
 A QUIC packet carrying an SID frame means that the frames following the SID
 frames in the packet payload are part of a FEC source symbol. The SID of
 this symbol is represented by the only field of the SID frame. A packet
-cannot contain more than one SID frame. A packet whose payload is
+MUST NOT contain more than one SID frame. A packet whose payload is
 FEC-protected MUST contain a SID frame whose SID field is the SID of
 the related source symbol. This alternative has one drawback: the SID frame
-is related to its containing packet. The SID frame is thus not idempotent.
+is not idempotent since it is related to its containing packet.
 An example of the use of the SID frame is shown in {{fig-sid-frame-example}}.
 
 
@@ -317,15 +315,15 @@ Sender                                       Receiver
 ~~~~
 {: #fig-sid-frame-example title="SID Alternative 2"}
 
-The source symbols carried by these packets are the same as for
-{{fig-source-symbol-frame-example}} of Alternative 1 and the outcome and wire
+The source symbols carried by the packets in this example are the same as for
+{{fig-source-symbol-frame-example}} and the outcome and wire
 format are the same.
 
 
 ## Sending the repair symbols
 {: #sec-repair-frame}
 
-The REPAIR symbols and the metadata attached to it are transferred using
+The repair symbols and the metadata attached to it are transferred using
 the REPAIR frame shown in {{fig-fec-repair-frame}}.
 
 ~~~~
@@ -336,10 +334,10 @@ REPAIR {
 {: #fig-fec-repair-frame title="REPAIR frame format"}
 
 The payload of the REPAIR frame is specific to the underlying
-erasure-correcting code. In addition to the repair symbol itself, it may
+FEC scheme. In addition to the repair symbol itself, it may
 contain any metadata needed by the erasure-correcting code (e.g. identifying
-the source symbols protected by the repair symbol carried in the frame).
-Depending on the underlying FEC scheme, the REPAIR frame MAY contain
+the source symbols protected by the repair symbol carried by the frame).
+Depending on the FEC scheme, the REPAIR frame MAY contain
 only a part of a repair symbol.
 
 
@@ -354,18 +352,18 @@ is described in {{fig-fec-window-frame}}.
 
 ~~~~
 FEC_WINDOW {
-  Window Epoch (i),
+  Window Sequence Number (i),
   Window Size (i),
 }
 ~~~~
 {: #fig-fec-window-frame title="FEC_WINDOW frame format"}
 
-The Window Epoch field is a unique identifier increasing by exactly one
+The Window Sequence Number field is a unique identifier increasing by exactly one
 for each new FEC_WINDOW frame sent by the FEC receiver.
 
 The Window Size field indicates the number of symbols that can be stored
 simultaneously by the receiver. The Window Size value overrides the
-the window sizes received for smaller window epochs.
+the window sizes received for smaller window sequence numbers.
 
 
 ## Announcing the recovered symbols
@@ -386,7 +384,8 @@ SYMBOL_ACK {
 ~~~~
 {: #fig-symbol-ack-frame title="SYMBOL_ACK frame format"}
 
-The frame has a similar format to the ACK frame. In addition to symbols
+The frame has a similar format to the ACK frame, announcing the reception
+of SIDs instead of packet numbers. In addition to symbols
 recovered by FEC, this frame MAY also announce symbols received regularly
 through the network to avoid gaps in the ACK ranges and reduce the frame
 size. There is no obligation for a FEC receiver to send SYMBOL_ACK frames.
@@ -400,9 +399,9 @@ state on the network (see {{sec-coding-and-congestion}}).
 
 The coding and network channels being unrelated, the fact of receiving symbols
 through the coding channel MUST NOT be used to infer any congestion state on
-the network channel. Especially, receiving a symbol through the coding channel
-MUST NOT be used to hide the network loss event of the corresponding packet to
-the congestion control, applying Recommandation 1 of {{RFC9265}}.
+the network channel. More specifically, receiving a symbol through the coding
+channel MUST NOT be used to hide the network loss event of the corresponding
+packet to the congestion control, applying Recommandation 1 of {{RFC9265}}.
 
 
 # Negociating the FEC extension using transport parameters
@@ -434,7 +433,7 @@ document.
 Each QUIC endpoint uses the decoder_fec_scheme transport parameter to
 define the FEC scheme used to decode the received repair symbols. The
 QUIC sender MUST use the specified FEC scheme to generate repair symbols.
-The decoder_fec_scheme parameter is an integer value representing is the
+The decoder_fec_scheme parameter is an integer value representing the
 identifier of the desired FEC scheme.
 For instance, a FEC scheme using reed solomon could be identified by the
 ID 0x0 and a FEC scheme using LDPC could be identified by 0x1.
@@ -461,7 +460,7 @@ only operates inside the encrypted payload.
 
 ## DoS due to difficult symbols recoveries
 
-An attacker could try to cuase a DoS of a receiver by selectively sending source
+An attacker could try to cause a DoS of a receiver by selectively sending source
 and repair symbols to trigger intensive erasure correction operations on the
 receiver. A QUIC receiver is never forced to perform any erasure correction
 and may ignore any received repair symbol if it has doubts in its capabilities
@@ -471,8 +470,8 @@ to decode it in a reasonable amount of time.
 # IANA Considerations
 
 This document defines three new transport parameters and five new frames. The
-SID and SOURCE_SYMBOL frames serve the same purpose. Only one will be removed
-in next versions of this document.
+SID and SOURCE_SYMBOL frames serve the same purpose. One of them will be
+removed in next versions of this document.
 
 
 ## New transport parameters
