@@ -58,17 +58,17 @@ upon network losses. Instead, the lost information is sent again in
 new frames carried by new packets. Retransmitting the lost information
 requires the loss recovery mechanism to identify lost packets which
 may take up to several hundreds of milliseconds {{QUIC-RECOVERY}}.
-Depending on their delay-sensitivity, some applications running QUIC
+Depending on their delay-sensitivity, some applications using QUIC
 could not afford such a waiting time to ensure a good quality of
 experience to their users.
 
 Works has already been done to consider the use of
-Forward Erasure Correction for the QUIC protocol to ensure timely
+Forward Erasure Correction (FEC) for the QUIC protocol to ensure timely
 data delivery for delay-sensitive applications {{QUIC-FEC}} {{FlEC}}
 {{I-D.swett-nwcrg-coding-for-quic}}.
 This document defines additions to the QUIC protocol to extend its
 loss recovery mechanism and make it able to recover from packet
-losses prior to loss detection.
+losses prior to retransmission using FEC.
 
 
 # Conventions and Definitions
@@ -77,21 +77,21 @@ losses prior to loss detection.
 
 ## FEC-related definitions
 
-Source symbol: piece of information exchanged by two endpoints.
+Source symbol: piece of information exchanged by two endpoints. This document considers QUIC packets payloads as source symbols.
 
 Repair symbol: redundant information constructed from the combination
 of several source symbols.
 
-Erasure: loss of one or more entire symbols
+Erasure: loss of one or more symbols
 
 Erasure correction code: algorithm generating repair symbols and
 reconstructing missing source symbols from a set of source and
 repair symbols.
 
-Forward Erasure Correction: process of recovering erased symbols prior
-to the detection of their erasure.
+Forward Erasure Correction: process of recovering erased symbols
+before the detection of their erasure.
 
-FEC scheme: the conjunction of an erasure correction code and its
+FEC scheme: the conjunction of an erasure correction code and the
 specific protocol elements required to use it with the design
 described in this document.
 
@@ -103,19 +103,22 @@ Decoder: entity reconstructing missing source symbols using an erasure
 correction code. The decoder can be a library used by the protocol
 implementation or a program running in a separate process or machine.
 
+Coding window: window of source symbols that are required to decode a
+repair symbol.
 
 # The network channel and the coding channel
 
-Regular QUIC endpoints exchange information over a network channel. Adding
-Forward Erasure Correction to QUIC enables an enpoint to receive information
+QUIC endpoints exchange information over a network channel. Adding
+Forward Erasure Correction to QUIC enables an endpoint to receive information
 over a coding channel.  A coding channel can be seen as a communication
-channel between a QUIC endpoint and a FEC decoder. The decoder often
+channel between a QUIC receiver and a FEC decoder. The decoder often
 runs on the same machine as the QUIC receiver and can even be part of the
 protocol implementation itself. A source symbol is received through the coding
 channel when it is recovered by the FEC decoder instead of being explicitly
-received through the network. Only the data sent on the network channel are
-really transmitted on the wire. {{fig-network-and-coding-channels}}
-illustrates how symbols can be received from both channels.
+received through the network. Only the data sent on the network channel is
+really transmitted on the wire between the two QUIC endpoints.
+{{fig-network-and-coding-channels}} illustrates how symbols can be received
+from both channels.
 
 ~~~~
 
@@ -146,21 +149,22 @@ the network channel"}
 
 In this illustration, the sender sends three QUIC packets through the
 network channel. Packets 1 and 2 carry one source symbol each
-and the packet 3 carries one repair symbol protecting the
+and packet 3 carries one repair symbol protecting the
 two source symbols. Packet 2 is lost due to network imperfection
 preventing SOURCE_SYMBOL(2) from being received through the network
 channel. The FEC decoder reconstructs SOURCE_SYMBOL(2) by combining
 SOURCE_SYMBOL(1) and REPAIR_SYMBOL. SOURCE_SYMBOL(2) is thus received
 through the coding channel. Note that SOURCE_SYMBOL(2) is not received
 as a packet since QUIC packets are only exchanged through the network
-channel. On the other hand, source symbols can be received from both
-the network (inside QUIC packets) and coding channels.
+channel. On the other hand, source symbols are carried by QUIC packets
+through the network channel and sent directly to the decoder through the
+coding channel..
 
 
 # FEC and the loss recovery mechanism
 
-The FEC mechanism described in this document is additional to the
-classical QUIC loss recovery mechanism {{QUIC-RECOVERY}} and does
+The FEC mechanism described in this document is an enhancement of the
+classical QUIC loss recovery mechanism {{QUIC-RECOVERY}}. It does
 not replace it by any means. A QUIC endpoint MAY ignore every received
 repair symbol and MAY not perform any symbol recovery at all. The FEC
 mechanism is only intended to allow a receiver recovering faster from
@@ -179,27 +183,26 @@ for allowing QUIC endpoints to protect information using FEC.
 There is no need to protect every piece information sent on the wire by
 QUIC. Some pieces of information are already sent redundantly (e.g. ACKs)
 and some data are not delay sensitive and can be retransmitted later with
-no harm (e.g. background download on a separate stream). When exchanging
-packets, endpoints need to agree on which parts of the packets are part of
-the protected source symbols and how to build a source symbol from what is
-sent on the wire.
+no harm (e.g. background download on a separate stream). Endpoints need
+to agree on which parts of the packets are part of the protected source
+symbols and how to compose a source symbol from what is sent on the wire.
 
-The versions 01 and 02 of {{I-D.swett-nwcrg-coding-for-quic}} only protect
+Versions 01 and 02 of {{I-D.swett-nwcrg-coding-for-quic}} only protect
 streams payload. The idea is simple when using a single stream but becomes
 complicated and requires more signaling in a multi-stream scenario. It also
-cannot handle the protection of DATAGRAM frames payload.
+cannot protect DATAGRAM frames.
 In this document, we propose to consider whole frames as part of the source
 symbols. Source symbols are thus the counterpart to QUIC packets for the
-coding channel. Packets carry frames through the network channel while
-source symbols carry frames through the coding channel. In order to reduce
-signalling between the peers, a single source symbol MUST NOT contain the
-frames of several QUIC packets at the same time.
+coding channel. Packets carry frames through the network channel and
+source symbols allow receiving frames from the coding channel.
+In order to reduce signalling between the peers, a single source symbol
+MUST NOT contain the frames of several QUIC packets at the same time.
 
 
 ## Identifying the source symbols from QUIC packets
 
 Upon reception of a QUIC packet, a receiver needs to identify the source
-symbols carried by the packet to forward it to the FEC decoder.
+symbols contained in the packet to forward to the FEC decoder.
 The decoder also needs to know which source symbols were lost. Since QUIC
 does not enforce sending contiguously increasing packet numbers, it is not
 possible for a receiver to distinguish a lost packet from a packet that
@@ -264,7 +267,7 @@ Sender                                                       Receiver
 ~~~~
 {: #fig-source-symbol-frame-example title="SID Alternative 1"}
 
-The two SOURCE_SYMBOL frames contain describe the source symbols with
+The two SOURCE_SYMBOL frames contain the source symbols with
 SID 0 and 1. The first source symbol contains a frame for stream 4 while
 the second one contains a frame for stream 8 and a DATAGRAM frame. The ACK
 frame of packet 5 and the STREAM frame for stream 2 of packet 6 are not part
@@ -323,7 +326,7 @@ format are the same.
 ## Sending the repair symbols
 {: #sec-repair-frame}
 
-The repair symbols and the metadata attached to it are transferred using
+The repair symbols and the metadata attached to them are transferred using
 the REPAIR frame shown in {{fig-fec-repair-frame}}.
 
 ~~~~
@@ -345,34 +348,34 @@ only a part of a repair symbol.
 {: #sec-fec-window-frame}
 
 The receiver needs to store the received symbols in order to recover the
-lost source symbols. The FEC_WINDOW frame is sent by the symbols receiver
+lost source symbols. The FEC_WINDOW frame is sent by the receiver
 to announce the number of symbols  that can be stored simultaneously by
 the receiver at a given point of time. The format of the FEC_WINDOW frame
 is described in {{fig-fec-window-frame}}.
 
 ~~~~
 FEC_WINDOW {
-  Window Sequence Number (i),
-  Window Size (i),
+  FEC Window Epoch (i),
+  FEC Window Size (i),
 }
 ~~~~
 {: #fig-fec-window-frame title="FEC_WINDOW frame format"}
 
-The Window Sequence Number field is a unique identifier increasing by exactly one
+The Window Epoch field is a unique identifier increasing by exactly one
 for each new FEC_WINDOW frame sent by the FEC receiver.
 
 The Window Size field indicates the number of symbols that can be stored
 simultaneously by the receiver. The Window Size value overrides the
-the window sizes received for smaller window sequence numbers.
+window sizes received for smaller window epochs.
 
 
 ## Announcing the recovered symbols
 {: #sec-symbol-ack-frame}
 
 The FEC receiver MAY advertise the source symbols that have been received
-either through the network or using FEC to avoid the sender retransmitting
-the data of the recovered source symbols. This can be done using the
-SYMBOL_ACK frame as shown in {{fig-symbol-ack-frame}}.
+either through the network or coding channels to avoid the sender
+retransmitting the data of the recovered source symbols. This can be
+done using the SYMBOL_ACK frame as shown in {{fig-symbol-ack-frame}}.
 
 ~~~~
 SYMBOL_ACK {
@@ -384,7 +387,7 @@ SYMBOL_ACK {
 ~~~~
 {: #fig-symbol-ack-frame title="SYMBOL_ACK frame format"}
 
-The frame has a similar format to the ACK frame, announcing the reception
+The frame has a similar format as the ACK frame, announcing the reception
 of SIDs instead of packet numbers. In addition to symbols
 recovered by FEC, this frame MAY also announce symbols received regularly
 through the network to avoid gaps in the ACK ranges and reduce the frame
@@ -397,7 +400,7 @@ state on the network (see {{sec-coding-and-congestion}}).
 # Coding channel and congestion control
 {: #sec-coding-and-congestion}
 
-The coding and network channels being unrelated, the fact of receiving symbols
+The coding and network channels being unrelated, receiving symbols
 through the coding channel MUST NOT be used to infer any congestion state on
 the network channel. More specifically, receiving a symbol through the coding
 channel MUST NOT be used to hide the network loss event of the corresponding
@@ -435,7 +438,7 @@ define the FEC scheme used to decode the received repair symbols. The
 QUIC sender MUST use the specified FEC scheme to generate repair symbols.
 The decoder_fec_scheme parameter is an integer value representing the
 identifier of the desired FEC scheme.
-For instance, a FEC scheme using reed solomon could be identified by the
+For instance, a FEC scheme using Reed Solomon could be identified by the
 ID 0x0 and a FEC scheme using LDPC could be identified by 0x1.
 
 This document does not specify nor identify any FEC scheme yet.
@@ -471,7 +474,9 @@ to decode it in a reasonable amount of time.
 
 This document defines three new transport parameters and five new frames. The
 SID and SOURCE_SYMBOL frames serve the same purpose. One of them will be
-removed in next versions of this document.
+removed in next versions of this document. Every parameter of frame ID are
+still to be determined. The values present in the tables are used for
+experiments.
 
 
 ## New transport parameters
