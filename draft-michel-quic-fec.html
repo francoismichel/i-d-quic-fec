@@ -1043,7 +1043,7 @@ svg :is([stroke="fill"], [fill^="#fff"]) {
 </tr></thead>
 <tfoot><tr>
 <td class="left">Michel</td>
-<td class="center">Expires 8 April 2023</td>
+<td class="center">Expires 16 April 2023</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1056,12 +1056,12 @@ svg :is([stroke="fill"], [fill^="#fff"]) {
 <dd class="internet-draft">draft-michel-quic-fec-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2022-10-05" class="published">5 October 2022</time>
+<time datetime="2022-10-13" class="published">13 October 2022</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Informational</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2023-04-08">8 April 2023</time></dd>
+<dd class="expires"><time datetime="2023-04-16">16 April 2023</time></dd>
 <dt class="label-authors">Author:</dt>
 <dd class="authors">
 <div class="author">
@@ -1113,7 +1113,7 @@ through the network.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 8 April 2023.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 16 April 2023.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1254,16 +1254,16 @@ upon network losses. Instead, the lost information is sent again in
 new frames carried by new packets. Retransmitting the lost information
 requires the loss recovery mechanism to identify lost packets which
 may take up to several hundreds of milliseconds <span>[<a href="#QUIC-RECOVERY" class="cite xref">QUIC-RECOVERY</a>]</span>.
-Depending on their delay-sensitivity, some applications running QUIC
+Depending on their delay-sensitivity, some applications using QUIC
 could not afford such a waiting time to ensure a good quality of
 experience to their users.<a href="#section-1-1" class="pilcrow">¶</a></p>
 <p id="section-1-2">Works has already been done to consider the use of
-Forward Erasure Correction for the QUIC protocol to ensure timely
+Forward Erasure Correction (FEC) for the QUIC protocol to ensure timely
 data delivery for delay-sensitive applications <span>[<a href="#QUIC-FEC" class="cite xref">QUIC-FEC</a>]</span> <span>[<a href="#FlEC" class="cite xref">FlEC</a>]</span>
         <span>[<a href="#I-D.swett-nwcrg-coding-for-quic" class="cite xref">I-D.swett-nwcrg-coding-for-quic</a>]</span>.
 This document defines additions to the QUIC protocol to extend its
 loss recovery mechanism and make it able to recover from packet
-losses prior to loss detection.<a href="#section-1-2" class="pilcrow">¶</a></p>
+losses prior to retransmission using FEC.<a href="#section-1-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="conventions-and-definitions">
@@ -1280,16 +1280,16 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
         <h3 id="name-fec-related-definitions">
 <a href="#section-2.1" class="section-number selfRef">2.1. </a><a href="#name-fec-related-definitions" class="section-name selfRef">FEC-related definitions</a>
         </h3>
-<p id="section-2.1-1">Source symbol: piece of information exchanged by two endpoints.<a href="#section-2.1-1" class="pilcrow">¶</a></p>
+<p id="section-2.1-1">Source symbol: piece of information exchanged by two endpoints. This document considers QUIC packets payloads as source symbols.<a href="#section-2.1-1" class="pilcrow">¶</a></p>
 <p id="section-2.1-2">Repair symbol: redundant information constructed from the combination
 of several source symbols.<a href="#section-2.1-2" class="pilcrow">¶</a></p>
-<p id="section-2.1-3">Erasure: loss of one or more entire symbols<a href="#section-2.1-3" class="pilcrow">¶</a></p>
+<p id="section-2.1-3">Erasure: loss of one or more symbols<a href="#section-2.1-3" class="pilcrow">¶</a></p>
 <p id="section-2.1-4">Erasure correction code: algorithm generating repair symbols and
 reconstructing missing source symbols from a set of source and
 repair symbols.<a href="#section-2.1-4" class="pilcrow">¶</a></p>
-<p id="section-2.1-5">Forward Erasure Correction: process of recovering erased symbols prior
-to the detection of their erasure.<a href="#section-2.1-5" class="pilcrow">¶</a></p>
-<p id="section-2.1-6">FEC scheme: the conjunction of an erasure correction code and its
+<p id="section-2.1-5">Forward Erasure Correction: process of recovering erased symbols
+before the detection of their erasure.<a href="#section-2.1-5" class="pilcrow">¶</a></p>
+<p id="section-2.1-6">FEC scheme: the conjunction of an erasure correction code and the
 specific protocol elements required to use it with the design
 described in this document.<a href="#section-2.1-6" class="pilcrow">¶</a></p>
 <p id="section-2.1-7">Encoder: entity producing repair symbols using an erasure correction code.
@@ -1298,6 +1298,8 @@ program running in a separate process or machine.<a href="#section-2.1-7" class=
 <p id="section-2.1-8">Decoder: entity reconstructing missing source symbols using an erasure
 correction code. The decoder can be a library used by the protocol
 implementation or a program running in a separate process or machine.<a href="#section-2.1-8" class="pilcrow">¶</a></p>
+<p id="section-2.1-9">Coding window: window of source symbols that are required to decode a
+repair symbol.<a href="#section-2.1-9" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -1307,16 +1309,17 @@ implementation or a program running in a separate process or machine.<a href="#s
       <h2 id="name-the-network-channel-and-the">
 <a href="#section-3" class="section-number selfRef">3. </a><a href="#name-the-network-channel-and-the" class="section-name selfRef">The network channel and the coding channel</a>
       </h2>
-<p id="section-3-1">Regular QUIC endpoints exchange information over a network channel. Adding
-Forward Erasure Correction to QUIC enables an enpoint to receive information
+<p id="section-3-1">QUIC endpoints exchange information over a network channel. Adding
+Forward Erasure Correction to QUIC enables an endpoint to receive information
 over a coding channel.  A coding channel can be seen as a communication
-channel between a QUIC endpoint and a FEC decoder. The decoder often
+channel between a QUIC receiver and a FEC decoder. The decoder often
 runs on the same machine as the QUIC receiver and can even be part of the
 protocol implementation itself. A source symbol is received through the coding
 channel when it is recovered by the FEC decoder instead of being explicitly
-received through the network. Only the data sent on the network channel are
-really transmitted on the wire. <a href="#fig-network-and-coding-channels" class="auto internal xref">Figure 1</a>
-illustrates how symbols can be received from both channels.<a href="#section-3-1" class="pilcrow">¶</a></p>
+received through the network. Only the data sent on the network channel is
+really transmitted on the wire between the two QUIC endpoints.
+<a href="#fig-network-and-coding-channels" class="auto internal xref">Figure 1</a> illustrates how symbols can be received
+from both channels.<a href="#section-3-1" class="pilcrow">¶</a></p>
 <span id="name-receiving-symbols-through-t"></span><div id="fig-network-and-coding-channels">
 <figure id="figure-1">
         <div class="alignLeft art-text artwork" id="section-3-2.1">
@@ -1349,15 +1352,16 @@ Sender                         Receiver               Decoder
 </div>
 <p id="section-3-3">In this illustration, the sender sends three QUIC packets through the
 network channel. Packets 1 and 2 carry one source symbol each
-and the packet 3 carries one repair symbol protecting the
+and packet 3 carries one repair symbol protecting the
 two source symbols. Packet 2 is lost due to network imperfection
 preventing SOURCE_SYMBOL(2) from being received through the network
 channel. The FEC decoder reconstructs SOURCE_SYMBOL(2) by combining
 SOURCE_SYMBOL(1) and REPAIR_SYMBOL. SOURCE_SYMBOL(2) is thus received
 through the coding channel. Note that SOURCE_SYMBOL(2) is not received
 as a packet since QUIC packets are only exchanged through the network
-channel. On the other hand, source symbols can be received from both
-the network (inside QUIC packets) and coding channels.<a href="#section-3-3" class="pilcrow">¶</a></p>
+channel. On the other hand, source symbols are carried by QUIC packets
+through the network channel and sent directly to the decoder through the
+coding channel..<a href="#section-3-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="fec-and-the-loss-recovery-mechanism">
@@ -1365,8 +1369,8 @@ the network (inside QUIC packets) and coding channels.<a href="#section-3-3" cla
       <h2 id="name-fec-and-the-loss-recovery-m">
 <a href="#section-4" class="section-number selfRef">4. </a><a href="#name-fec-and-the-loss-recovery-m" class="section-name selfRef">FEC and the loss recovery mechanism</a>
       </h2>
-<p id="section-4-1">The FEC mechanism described in this document is additional to the
-classical QUIC loss recovery mechanism <span>[<a href="#QUIC-RECOVERY" class="cite xref">QUIC-RECOVERY</a>]</span> and does
+<p id="section-4-1">The FEC mechanism described in this document is an enhancement of the
+classical QUIC loss recovery mechanism <span>[<a href="#QUIC-RECOVERY" class="cite xref">QUIC-RECOVERY</a>]</span>. It does
 not replace it by any means. A QUIC endpoint <span class="bcp14">MAY</span> ignore every received
 repair symbol and <span class="bcp14">MAY</span> not perform any symbol recovery at all. The FEC
 mechanism is only intended to allow a receiver recovering faster from
@@ -1389,20 +1393,19 @@ for allowing QUIC endpoints to protect information using FEC.<a href="#section-5
 <p id="section-5.1-1">There is no need to protect every piece information sent on the wire by
 QUIC. Some pieces of information are already sent redundantly (e.g. ACKs)
 and some data are not delay sensitive and can be retransmitted later with
-no harm (e.g. background download on a separate stream). When exchanging
-packets, endpoints need to agree on which parts of the packets are part of
-the protected source symbols and how to build a source symbol from what is
-sent on the wire.<a href="#section-5.1-1" class="pilcrow">¶</a></p>
-<p id="section-5.1-2">The versions 01 and 02 of <span>[<a href="#I-D.swett-nwcrg-coding-for-quic" class="cite xref">I-D.swett-nwcrg-coding-for-quic</a>]</span> only protect
+no harm (e.g. background download on a separate stream). Endpoints need
+to agree on which parts of the packets are part of the protected source
+symbols and how to compose a source symbol from what is sent on the wire.<a href="#section-5.1-1" class="pilcrow">¶</a></p>
+<p id="section-5.1-2">Versions 01 and 02 of <span>[<a href="#I-D.swett-nwcrg-coding-for-quic" class="cite xref">I-D.swett-nwcrg-coding-for-quic</a>]</span> only protect
 streams payload. The idea is simple when using a single stream but becomes
 complicated and requires more signaling in a multi-stream scenario. It also
-cannot handle the protection of DATAGRAM frames payload.
+cannot protect DATAGRAM frames.
 In this document, we propose to consider whole frames as part of the source
 symbols. Source symbols are thus the counterpart to QUIC packets for the
-coding channel. Packets carry frames through the network channel while
-source symbols carry frames through the coding channel. In order to reduce
-signalling between the peers, a single source symbol <span class="bcp14">MUST NOT</span> contain the
-frames of several QUIC packets at the same time.<a href="#section-5.1-2" class="pilcrow">¶</a></p>
+coding channel. Packets carry frames through the network channel and
+source symbols allow receiving frames from the coding channel.
+In order to reduce signalling between the peers, a single source symbol
+<span class="bcp14">MUST NOT</span> contain the frames of several QUIC packets at the same time.<a href="#section-5.1-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="identifying-the-source-symbols-from-quic-packets">
@@ -1411,7 +1414,7 @@ frames of several QUIC packets at the same time.<a href="#section-5.1-2" class="
 <a href="#section-5.2" class="section-number selfRef">5.2. </a><a href="#name-identifying-the-source-symb" class="section-name selfRef">Identifying the source symbols from QUIC packets</a>
         </h3>
 <p id="section-5.2-1">Upon reception of a QUIC packet, a receiver needs to identify the source
-symbols carried by the packet to forward it to the FEC decoder.
+symbols contained in the packet to forward to the FEC decoder.
 The decoder also needs to know which source symbols were lost. Since QUIC
 does not enforce sending contiguously increasing packet numbers, it is not
 possible for a receiver to distinguish a lost packet from a packet that
@@ -1483,7 +1486,7 @@ Sender                                                       Receiver
 <a href="#name-sid-alternative-1" class="selfRef">SID Alternative 1</a>
             </figcaption></figure>
 </div>
-<p id="section-5.2.1-5">The two SOURCE_SYMBOL frames contain describe the source symbols with
+<p id="section-5.2.1-5">The two SOURCE_SYMBOL frames contain the source symbols with
 SID 0 and 1. The first source symbol contains a frame for stream 4 while
 the second one contains a frame for stream 8 and a DATAGRAM frame. The ACK
 frame of packet 5 and the STREAM frame for stream 2 of packet 6 are not part
@@ -1556,7 +1559,7 @@ format are the same.<a href="#section-5.2.2-5" class="pilcrow">¶</a></p>
         <h3 id="name-sending-the-repair-symbols">
 <a href="#section-5.3" class="section-number selfRef">5.3. </a><a href="#name-sending-the-repair-symbols" class="section-name selfRef">Sending the repair symbols</a>
         </h3>
-<p id="section-5.3-1">The repair symbols and the metadata attached to it are transferred using
+<p id="section-5.3-1">The repair symbols and the metadata attached to them are transferred using
 the REPAIR frame shown in <a href="#fig-fec-repair-frame" class="auto internal xref">Figure 6</a>.<a href="#section-5.3-1" class="pilcrow">¶</a></p>
 <span id="name-repair-frame-format"></span><div id="fig-fec-repair-frame">
 <figure id="figure-6">
@@ -1585,7 +1588,7 @@ only a part of a repair symbol.<a href="#section-5.3-3" class="pilcrow">¶</a></
 <a href="#section-5.4" class="section-number selfRef">5.4. </a><a href="#name-announcing-the-coding-windo" class="section-name selfRef">Announcing the coding window size</a>
         </h3>
 <p id="section-5.4-1">The receiver needs to store the received symbols in order to recover the
-lost source symbols. The FEC_WINDOW frame is sent by the symbols receiver
+lost source symbols. The FEC_WINDOW frame is sent by the receiver
 to announce the number of symbols  that can be stored simultaneously by
 the receiver at a given point of time. The format of the FEC_WINDOW frame
 is described in <a href="#fig-fec-window-frame" class="auto internal xref">Figure 7</a>.<a href="#section-5.4-1" class="pilcrow">¶</a></p>
@@ -1594,8 +1597,8 @@ is described in <a href="#fig-fec-window-frame" class="auto internal xref">Figur
           <div class="alignLeft art-text artwork" id="section-5.4-2.1">
 <pre>
 FEC_WINDOW {
-  Window Sequence Number (i),
-  Window Size (i),
+  FEC Window Epoch (i),
+  FEC Window Size (i),
 }
 </pre>
 </div>
@@ -1603,11 +1606,11 @@ FEC_WINDOW {
 <a href="#name-fec_window-frame-format" class="selfRef">FEC_WINDOW frame format</a>
           </figcaption></figure>
 </div>
-<p id="section-5.4-3">The Window Sequence Number field is a unique identifier increasing by exactly one
+<p id="section-5.4-3">The Window Epoch field is a unique identifier increasing by exactly one
 for each new FEC_WINDOW frame sent by the FEC receiver.<a href="#section-5.4-3" class="pilcrow">¶</a></p>
 <p id="section-5.4-4">The Window Size field indicates the number of symbols that can be stored
 simultaneously by the receiver. The Window Size value overrides the
-the window sizes received for smaller window sequence numbers.<a href="#section-5.4-4" class="pilcrow">¶</a></p>
+window sizes received for smaller window epochs.<a href="#section-5.4-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="sec-symbol-ack-frame">
@@ -1616,9 +1619,9 @@ the window sizes received for smaller window sequence numbers.<a href="#section-
 <a href="#section-5.5" class="section-number selfRef">5.5. </a><a href="#name-announcing-the-recovered-sy" class="section-name selfRef">Announcing the recovered symbols</a>
         </h3>
 <p id="section-5.5-1">The FEC receiver <span class="bcp14">MAY</span> advertise the source symbols that have been received
-either through the network or using FEC to avoid the sender retransmitting
-the data of the recovered source symbols. This can be done using the
-SYMBOL_ACK frame as shown in <a href="#fig-symbol-ack-frame" class="auto internal xref">Figure 8</a>.<a href="#section-5.5-1" class="pilcrow">¶</a></p>
+either through the network or coding channels to avoid the sender
+retransmitting the data of the recovered source symbols. This can be
+done using the SYMBOL_ACK frame as shown in <a href="#fig-symbol-ack-frame" class="auto internal xref">Figure 8</a>.<a href="#section-5.5-1" class="pilcrow">¶</a></p>
 <span id="name-symbol_ack-frame-format"></span><div id="fig-symbol-ack-frame">
 <figure id="figure-8">
           <div class="alignLeft art-text artwork" id="section-5.5-2.1">
@@ -1635,7 +1638,7 @@ SYMBOL_ACK {
 <a href="#name-symbol_ack-frame-format" class="selfRef">SYMBOL_ACK frame format</a>
           </figcaption></figure>
 </div>
-<p id="section-5.5-3">The frame has a similar format to the ACK frame, announcing the reception
+<p id="section-5.5-3">The frame has a similar format as the ACK frame, announcing the reception
 of SIDs instead of packet numbers. In addition to symbols
 recovered by FEC, this frame <span class="bcp14">MAY</span> also announce symbols received regularly
 through the network to avoid gaps in the ACK ranges and reduce the frame
@@ -1652,7 +1655,7 @@ state on the network (see <a href="#sec-coding-and-congestion" class="auto inter
       <h2 id="name-coding-channel-and-congesti">
 <a href="#section-6" class="section-number selfRef">6. </a><a href="#name-coding-channel-and-congesti" class="section-name selfRef">Coding channel and congestion control</a>
       </h2>
-<p id="section-6-1">The coding and network channels being unrelated, the fact of receiving symbols
+<p id="section-6-1">The coding and network channels being unrelated, receiving symbols
 through the coding channel <span class="bcp14">MUST NOT</span> be used to infer any congestion state on
 the network channel. More specifically, receiving a symbol through the coding
 channel <span class="bcp14">MUST NOT</span> be used to hide the network loss event of the corresponding
@@ -1712,7 +1715,7 @@ define the FEC scheme used to decode the received repair symbols. The
 QUIC sender <span class="bcp14">MUST</span> use the specified FEC scheme to generate repair symbols.
 The decoder_fec_scheme parameter is an integer value representing the
 identifier of the desired FEC scheme.
-For instance, a FEC scheme using reed solomon could be identified by the
+For instance, a FEC scheme using Reed Solomon could be identified by the
 ID 0x0 and a FEC scheme using LDPC could be identified by 0x1.<a href="#section-7.2-1" class="pilcrow">¶</a></p>
 <p id="section-7.2-2">This document does not specify nor identify any FEC scheme yet.
 When the decoder_fec_scheme parameter is not advertized by the peer,
@@ -1762,7 +1765,9 @@ to decode it in a reasonable amount of time.<a href="#section-8.1-1" class="pilc
       </h2>
 <p id="section-9-1">This document defines three new transport parameters and five new frames. The
 SID and SOURCE_SYMBOL frames serve the same purpose. One of them will be
-removed in next versions of this document.<a href="#section-9-1" class="pilcrow">¶</a></p>
+removed in next versions of this document. Every parameter of frame ID are
+still to be determined. The values present in the tables are used for
+experiments.<a href="#section-9-1" class="pilcrow">¶</a></p>
 <div id="new-transport-parameters">
 <section id="section-9.1">
         <h3 id="name-new-transport-parameters">
