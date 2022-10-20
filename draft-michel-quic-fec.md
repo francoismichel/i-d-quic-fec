@@ -127,25 +127,25 @@ from both channels.
 
             Network Channel              Coding Channel
 
-Sender                         Receiver               Decoder      Application
-  |                                |                    |              |
-  |  PACKET(1)[SOURCE_SYMBOL(1)]   |                    |              |
-  |------------------------------->|  SOURCE_SYMBOL(1)  |  APP_DATA(1) |
-  |                                |------------------->|------------->|
-  |  PACKET(2)[SOURCE_SYMBOL(2)]   |                    |              |
-  |--------------x                 |                    |              |
-  |                                |                    |              |
-  |  PACKET(3)[REPAIR_SYMBOL]      |                    |              |
-  |------------------------------->|    REPAIR_SYMBOL   |              |
-  |                                |------------------->|              |
-  |                                |                    |(recomputes)  |
-  |                                |                    |(the source)  |
-  |                                |                    |(symbol    )  |
-  |                                |                    |              |
-  |                                |                    |  APP_DATA(2) |
-  |                                |                    |------------->|
-  |                                |                    |              |
-  |                                |                    |              |
+Sender                       Receiver             Decoder    Application
+  |                              |                    |              |
+  |  PACKET(1)[SOURCE_SYMBOL(1)] |                    |              |
+  |----------------------------->|  SOURCE_SYMBOL(1)  |  APP_DATA(1) |
+  |                              |------------------->|------------->|
+  |  PACKET(2)[SOURCE_SYMBOL(2)] |                    |              |
+  |--------------x               |                    |              |
+  |                              |                    |              |
+  |  PACKET(3)[REPAIR_SYMBOL]    |                    |              |
+  |----------------------------->|    REPAIR_SYMBOL   |              |
+  |                              |------------------->|              |
+  |                              |                    |(recomputes)  |
+  |                              |                    |(the source)  |
+  |                              |                    |(symbol    )  |
+  |                              |                    |              |
+  |                              |                    |  APP_DATA(2) |
+  |                              |                    |------------->|
+  |                              |                    |              |
+  |                              |                    |              |
 ~~~~
 {: #fig-network-and-coding-channels title="Receiving symbols through
 the network channel"}
