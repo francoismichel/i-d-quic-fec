@@ -424,7 +424,7 @@ This section defines the new transport parameters used to negociate and
 parametrize the FEC extension described in this document.
 
 
-## enable_fec (0xcafec)
+## enable_fec
 {: #sec-enable-fec-tp}
 
 The use of the FEC extension is negociated using the enable_fec transport
@@ -441,7 +441,7 @@ the QUIC endpoint MUST NOT use any frame or mechanism described in this
 document.
 
 
-## decoder_fec_scheme (0xcafecd)
+## decoder_fec_scheme
 {: #sec-decoder-fec-scheme-tp}
 
 Each QUIC endpoint uses the decoder_fec_scheme transport parameter to
@@ -466,7 +466,7 @@ When the decoder_fec_scheme parameter is not advertized by the peer,
 the QUIC sender MUST NOT send any repair symbol.
 
 
-## initial_coding_window (0xcafecc)
+## initial_coding_window
 {: #sec-initial-coding-window-tp}
 
 Each QUIC endpoint uses the initial_coding_window transport parameter to
@@ -492,32 +492,39 @@ to decode it in a reasonable amount of time.
 
 # IANA Considerations
 
+Disclaimer: the IDs defined in this document are present for experimental
+purposes only. They are not requested codepoints and are subject to change
+in the next versions of this document.
+
 This document defines three new transport parameters and five new frames. The
 SID and SOURCE_SYMBOL frames serve the same purpose. One of them will be
-removed in next versions of this document. Every parameter of frame ID are
-still to be determined. The values present in the tables are used for
-experiments.
+removed in next versions of this document. The values present in the tables
+are used for experiments.
 
 
 ## New transport parameters
 
 Parameter ID | Parameter name | Specification
 ---------|---------------------------------------
-0xcafec    | enable_fec             | {{sec-enable-fec-tp}}
-0xcafecd   | decoder_fec_scheme     | {{sec-decoder-fec-scheme-tp}}
-0xcafecc   | initial_coding_window  | {{sec-initial-coding-window-tp}}
+0x238ffeceXX | enable_fec             | {{sec-enable-fec-tp}}
+0x5dcdfecd   | decoder_fec_scheme     | {{sec-decoder-fec-scheme-tp}}
+0xccb7fecc    | initial_coding_window  | {{sec-initial-coding-window-tp}}
 {: #iana-transport-parameters title="New transport parameters"}
+
+The XX in 0x238ffeceXX are to be replaced by the version of this document
+that is implemented by the QUIC endpoint (e.g. the parameter ID for the
+version 00 of this document is 0x238ffece00).
 
 
 ## New frames
 
 Frame ID | Frame name | Specification
 ---------|---------------------------------------
-0xcafec    | REPAIR          | {{sec-repair-frame}}
-0xcafec55  | SOURCE_SYMBOL   | {{sec-source-symbol-frame}}
-0xcafec1d  | SID             | {{sec-sid-frame}}
-0xcafecac  | SYMBOL_ACK      | {{sec-symbol-ack-frame}}
-0xcafecc0d | FEC_WINDOW      | {{sec-fec-window-frame}}
+0xf0d40fec    | REPAIR          | {{sec-repair-frame}}
+0xc4450fec55  | SOURCE_SYMBOL   | {{sec-source-symbol-frame}}
+0xcfb059ec1d  | SID             | {{sec-sid-frame}}
+0x32a80fecac  | SYMBOL_ACK      | {{sec-symbol-ack-frame}}
+0x374dfecc0d | FEC_WINDOW      | {{sec-fec-window-frame}}
 {: #iana-frames title="New frames"}
 
 # Acknowledgments
