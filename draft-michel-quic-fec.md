@@ -1,7 +1,7 @@
 ---
 title: "Forward Erasure Correction for QUIC loss recovery"
 abbrev: "FEC for QUIC"
-category: info
+category: exp
 
 docname: draft-michel-quic-fec-latest
 submissiontype: IETF  # also: "independent", "IAB", or "IRTF"
@@ -12,9 +12,9 @@ v: 3
 area: "Transport"
 workgroup: "QUIC"
 keyword:
- - next generation
- - unicorn
- - sparkling distributed ledger
+ - FEC
+ - network coding
+ - QUIC
 venue:
   group: "QUIC"
   type: "Working Group"
@@ -28,6 +28,10 @@ author:
     fullname: François Michel
     organization: UCLouvain
     email: "francois.michel@uclouvain.be"
+ -
+    fullname: Olivier Bonaventure
+    organization: UCLouvain
+    email: "olivier.bonaventure@uclouvain.be"
 
 normative:
   QUICv1: RFC9000
