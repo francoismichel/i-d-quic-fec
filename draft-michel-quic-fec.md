@@ -507,8 +507,8 @@ are used for experiments.
 Parameter ID | Parameter name | Specification
 ---------|---------------------------------------
 0x238ffeceXX | enable_fec             | {{sec-enable-fec-tp}}
-0x5dcdfecd   | decoder_fec_scheme     | {{sec-decoder-fec-scheme-tp}}
-0xccb7fecc    | initial_coding_window  | {{sec-initial-coding-window-tp}}
+0x238ffecd   | decoder_fec_scheme     | {{sec-decoder-fec-scheme-tp}}
+0x238ffecc    | initial_coding_window  | {{sec-initial-coding-window-tp}}
 {: #iana-transport-parameters title="New transport parameters"}
 
 The XX in 0x238ffeceXX are to be replaced by the version of this document
@@ -520,11 +520,11 @@ version 00 of this document is 0x238ffece00).
 
 Frame ID | Frame name | Specification
 ---------|---------------------------------------
-0xf0d40fec    | REPAIR          | {{sec-repair-frame}}
-0xc4450fec55  | SOURCE_SYMBOL   | {{sec-source-symbol-frame}}
-0xcfb059ec1d  | SID             | {{sec-sid-frame}}
+0x32a80fec    | REPAIR          | {{sec-repair-frame}}
+0x32a80fec55  | SOURCE_SYMBOL   | {{sec-source-symbol-frame}}
+0x32a80fec1d  | SID             | {{sec-sid-frame}}
 0x32a80fecac  | SYMBOL_ACK      | {{sec-symbol-ack-frame}}
-0x374dfecc0d | FEC_WINDOW      | {{sec-fec-window-frame}}
+0x32a80fecc0 | FEC_WINDOW      | {{sec-fec-window-frame}}
 {: #iana-frames title="New frames"}
 
 # Acknowledgments
