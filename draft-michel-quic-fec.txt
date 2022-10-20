@@ -82,9 +82,9 @@ Table of Contents
      5.5.  Announcing the recovered symbols
    6.  Coding channel and congestion control
    7.  Negociating the FEC extension using transport parameters
-     7.1.  enable_fec (0xfec)
-     7.2.  decoder_fec_scheme (0xfecd)
-     7.3.  initial_coding_window (0xfecc)
+     7.1.  enable_fec (0xcafec)
+     7.2.  decoder_fec_scheme (0xcafecd)
+     7.3.  initial_coding_window (0xcafecc)
    8.  Security Considerations
      8.1.  DoS due to difficult symbols recoveries
    9.  IANA Considerations
@@ -436,7 +436,7 @@ Sender                       Receiver             Decoder    Application
    This section defines the new transport parameters used to negociate
    and parametrize the FEC extension described in this document.
 
-7.1.  enable_fec (0xfec)
+7.1.  enable_fec (0xcafec)
 
    The use of the FEC extension is negociated using the enable_fec
    transport parameter defined in Table 1 :
@@ -455,7 +455,7 @@ Sender                       Receiver             Decoder    Application
    QUIC endpoint MUST NOT use any frame or mechanism described in this
    document.
 
-7.2.  decoder_fec_scheme (0xfecd)
+7.2.  decoder_fec_scheme (0xcafecd)
 
    Each QUIC endpoint uses the decoder_fec_scheme transport parameter to
    define the FEC scheme used to decode the received repair symbols.
@@ -471,7 +471,7 @@ Sender                       Receiver             Decoder    Application
    decoder_fec_scheme parameter is not advertized by the peer, the QUIC
    sender MUST NOT send any repair symbol.
 
-7.3.  initial_coding_window (0xfecc)
+7.3.  initial_coding_window (0xcafecc)
 
    Each QUIC endpoint uses the initial_coding_window transport parameter
    to define the initial coding window size it uses to store source and
@@ -506,30 +506,30 @@ Sender                       Receiver             Decoder    Application
          +==============+=======================+===============+
          | Parameter ID | Parameter name        | Specification |
          +==============+=======================+===============+
-         | 0xfec        | enable_fec            | Section 7.1   |
+         | 0xcafec      | enable_fec            | Section 7.1   |
          +--------------+-----------------------+---------------+
-         | 0xfecd       | decoder_fec_scheme    | Section 7.2   |
+         | 0xcafecd     | decoder_fec_scheme    | Section 7.2   |
          +--------------+-----------------------+---------------+
-         | 0xfecc       | initial_coding_window | Section 7.3   |
+         | 0xcafecc     | initial_coding_window | Section 7.3   |
          +--------------+-----------------------+---------------+
 
                     Table 2: New transport parameters
 
 9.2.  New frames
 
-               +==========+===============+===============+
-               | Frame ID | Frame name    | Specification |
-               +==========+===============+===============+
-               | 0xfec    | REPAIR        | Section 5.3   |
-               +----------+---------------+---------------+
-               | 0xfec55  | SOURCE_SYMBOL | Section 5.2.1 |
-               +----------+---------------+---------------+
-               | 0xfec1d  | SID           | Section 5.2.2 |
-               +----------+---------------+---------------+
-               | 0xfecac  | SYMBOL_ACK    | Section 5.5   |
-               +----------+---------------+---------------+
-               | 0xfecc0d | FEC_WINDOW    | Section 5.4   |
-               +----------+---------------+---------------+
+              +============+===============+===============+
+              | Frame ID   | Frame name    | Specification |
+              +============+===============+===============+
+              | 0xcafec    | REPAIR        | Section 5.3   |
+              +------------+---------------+---------------+
+              | 0xcafec55  | SOURCE_SYMBOL | Section 5.2.1 |
+              +------------+---------------+---------------+
+              | 0xcafec1d  | SID           | Section 5.2.2 |
+              +------------+---------------+---------------+
+              | 0xcafecac  | SYMBOL_ACK    | Section 5.5   |
+              +------------+---------------+---------------+
+              | 0xcafecc0d | FEC_WINDOW    | Section 5.4   |
+              +------------+---------------+---------------+
 
                            Table 3: New frames
 
