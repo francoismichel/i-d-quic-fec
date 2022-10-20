@@ -108,7 +108,7 @@ Table of Contents
 
    Works has already been done to consider the use of Forward Erasure
    Correction (FEC) for the QUIC protocol to ensure timely data delivery
-   for delay-sensitive applications [QUIC-FEC] [FlEC]
+   for delay-sensitive applications [QUIC-FEC] [FlEC] [rQUIC]
    [I-D.swett-nwcrg-coding-for-quic].  This document defines additions
    to the QUIC protocol to extend its loss recovery mechanism and make
    it able to recover from packet losses prior to retransmission using
@@ -466,6 +466,11 @@ Sender                       Receiver             Decoder    Application
    a FEC scheme using LDPC could be identified by 0x1.
 
    This document does not specify nor identify any FEC scheme yet.
+   Several FEC schemes have been proposed
+   [I-D.roca-nwcrg-rlc-fec-scheme-for-quic] [RFC6865]
+   [I-D.irtf-nwcrg-tetrys].  The next version of this document will
+   detail how some of these schemes can be directly integrated in QUIC.
+
    Future versions of this document will provide ways to format FEC
    scheme-specific payload for REPAIR frames.  When the
    decoder_fec_scheme parameter is not advertized by the peer, the QUIC
@@ -575,6 +580,21 @@ Informative References
               DOI 10.1109/tnet.2022.3195611, 2022,
               <https://doi.org/10.1109/tnet.2022.3195611>.
 
+   [I-D.irtf-nwcrg-tetrys]
+              Detchart, J., Lochin, E., Lacan, J., and V. Roca, "Tetrys,
+              an On-the-Fly Network Coding Protocol", Work in Progress,
+              Internet-Draft, draft-irtf-nwcrg-tetrys-03, 6 September
+              2022, <https://datatracker.ietf.org/doc/html/draft-irtf-
+              nwcrg-tetrys-03>.
+
+   [I-D.roca-nwcrg-rlc-fec-scheme-for-quic]
+              Roca, V., Michel, F., Swett, I., and M. Montpetit,
+              "Sliding Window Random Linear Code (RLC) Forward Erasure
+              Correction (FEC) Schemes for QUIC", Work in Progress,
+              Internet-Draft, draft-roca-nwcrg-rlc-fec-scheme-for-quic-
+              03, 9 March 2020, <https://datatracker.ietf.org/doc/html/
+              draft-roca-nwcrg-rlc-fec-scheme-for-quic-03>.
+
    [I-D.swett-nwcrg-coding-for-quic]
               Swett, I., Montpetit, M., Roca, V., and F. Michel, "Coding
               for QUIC", Work in Progress, Internet-Draft, draft-swett-
@@ -587,6 +607,19 @@ Informative References
               QUIC", 2019 IFIP Networking Conference (IFIP Networking),
               DOI 10.23919/ifipnetworking.2019.8816838, May 2019,
               <https://doi.org/10.23919/ifipnetworking.2019.8816838>.
+
+   [RFC6865]  Roca, V., Cunche, M., Lacan, J., Bouabdallah, A., and K.
+              Matsuzono, "Simple Reed-Solomon Forward Error Correction
+              (FEC) Scheme for FECFRAME", RFC 6865,
+              DOI 10.17487/RFC6865, February 2013,
+              <https://www.rfc-editor.org/rfc/rfc6865>.
+
+   [rQUIC]    Garrido, P., Sanchez, I., Ferlin, S., Aguero, R., and O.
+              Alay, "rQUIC: Integrating FEC with QUIC for Robust
+              Wireless Communications", 2019 IEEE Global Communications
+              Conference (GLOBECOM),
+              DOI 10.1109/globecom38437.2019.9013401, December 2019,
+              <https://doi.org/10.1109/globecom38437.2019.9013401>.
 
 Authors' Addresses
 

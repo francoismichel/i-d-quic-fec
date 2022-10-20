@@ -1264,7 +1264,7 @@ ensure a good quality of experience to their users.<a href="#section-1-1" class=
 <p id="section-1-2">Works has already been done to consider the use of
 Forward Erasure Correction (FEC) for the QUIC protocol to ensure timely
 data delivery for delay-sensitive applications <span>[<a href="#QUIC-FEC" class="cite xref">QUIC-FEC</a>]</span> <span>[<a href="#FlEC" class="cite xref">FlEC</a>]</span>
-        <span>[<a href="#I-D.swett-nwcrg-coding-for-quic" class="cite xref">I-D.swett-nwcrg-coding-for-quic</a>]</span>.
+        <span>[<a href="#rQUIC" class="cite xref">rQUIC</a>]</span> <span>[<a href="#I-D.swett-nwcrg-coding-for-quic" class="cite xref">I-D.swett-nwcrg-coding-for-quic</a>]</span>.
 This document defines additions to the QUIC protocol to extend its
 loss recovery mechanism and make it able to recover from packet
 losses prior to retransmission using FEC.<a href="#section-1-2" class="pilcrow">¶</a></p>
@@ -1724,11 +1724,17 @@ The decoder_fec_scheme parameter is an integer value representing the
 identifier of the desired FEC scheme.
 For instance, a FEC scheme using Reed Solomon could be identified by the
 ID 0x0 and a FEC scheme using LDPC could be identified by 0x1.<a href="#section-7.2-1" class="pilcrow">¶</a></p>
-<p id="section-7.2-2">This document does not specify nor identify any FEC scheme yet. Future
+<p id="section-7.2-2">This document does not specify nor identify any FEC scheme yet.
+Several FEC schemes have been proposed
+<span>[<a href="#I-D.roca-nwcrg-rlc-fec-scheme-for-quic" class="cite xref">I-D.roca-nwcrg-rlc-fec-scheme-for-quic</a>]</span> <span>[<a href="#RFC6865" class="cite xref">RFC6865</a>]</span>
+          <span>[<a href="#I-D.irtf-nwcrg-tetrys" class="cite xref">I-D.irtf-nwcrg-tetrys</a>]</span>. The next version of this
+document will detail how some of these schemes can be directly integrated
+in QUIC.<a href="#section-7.2-2" class="pilcrow">¶</a></p>
+<p id="section-7.2-3">Future
 versions of this document will provide ways to format FEC scheme-specific
 payload for REPAIR frames.
 When the decoder_fec_scheme parameter is not advertized by the peer,
-the QUIC sender <span class="bcp14">MUST NOT</span> send any repair symbol.<a href="#section-7.2-2" class="pilcrow">¶</a></p>
+the QUIC sender <span class="bcp14">MUST NOT</span> send any repair symbol.<a href="#section-7.2-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="sec-initial-coding-window-tp">
@@ -1932,13 +1938,29 @@ experiments.<a href="#section-9-1" class="pilcrow">¶</a></p>
         <dd>
 <span class="refAuthor">Michel, F.</span>, <span class="refAuthor">Cohen, A.</span>, <span class="refAuthor">Malak, D.</span>, <span class="refAuthor">Coninck, Q.</span>, <span class="refAuthor">Medard, M.</span>, and <span class="refAuthor">O. Bonaventure</span>, <span class="refTitle">"FlEC: Enhancing QUIC With Application-Tailored Reliability Mechanisms"</span>, <span class="seriesInfo">IEEE/ACM Transactions on Networking pp. 1-14</span>, <span class="seriesInfo">DOI 10.1109/tnet.2022.3195611</span>, <time datetime="2022" class="refDate">2022</time>, <span>&lt;<a href="https://doi.org/10.1109/tnet.2022.3195611">https://doi.org/10.1109/tnet.2022.3195611</a>&gt;</span>. </dd>
 <dd class="break"></dd>
+<dt id="I-D.irtf-nwcrg-tetrys">[I-D.irtf-nwcrg-tetrys]</dt>
+        <dd>
+<span class="refAuthor">Detchart, J.</span>, <span class="refAuthor">Lochin, E.</span>, <span class="refAuthor">Lacan, J.</span>, and <span class="refAuthor">V. Roca</span>, <span class="refTitle">"Tetrys, an On-the-Fly Network Coding Protocol"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-irtf-nwcrg-tetrys-03</span>, <time datetime="2022-09-06" class="refDate">6 September 2022</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-irtf-nwcrg-tetrys-03">https://datatracker.ietf.org/doc/html/draft-irtf-nwcrg-tetrys-03</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="I-D.roca-nwcrg-rlc-fec-scheme-for-quic">[I-D.roca-nwcrg-rlc-fec-scheme-for-quic]</dt>
+        <dd>
+<span class="refAuthor">Roca, V.</span>, <span class="refAuthor">Michel, F.</span>, <span class="refAuthor">Swett, I.</span>, and <span class="refAuthor">M. Montpetit</span>, <span class="refTitle">"Sliding Window Random Linear Code (RLC) Forward Erasure Correction (FEC) Schemes for QUIC"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-roca-nwcrg-rlc-fec-scheme-for-quic-03</span>, <time datetime="2020-03-09" class="refDate">9 March 2020</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-roca-nwcrg-rlc-fec-scheme-for-quic-03">https://datatracker.ietf.org/doc/html/draft-roca-nwcrg-rlc-fec-scheme-for-quic-03</a>&gt;</span>. </dd>
+<dd class="break"></dd>
 <dt id="I-D.swett-nwcrg-coding-for-quic">[I-D.swett-nwcrg-coding-for-quic]</dt>
         <dd>
 <span class="refAuthor">Swett, I.</span>, <span class="refAuthor">Montpetit, M.</span>, <span class="refAuthor">Roca, V.</span>, and <span class="refAuthor">F. Michel</span>, <span class="refTitle">"Coding for QUIC"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-swett-nwcrg-coding-for-quic-04</span>, <time datetime="2020-03-09" class="refDate">9 March 2020</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-swett-nwcrg-coding-for-quic-04">https://datatracker.ietf.org/doc/html/draft-swett-nwcrg-coding-for-quic-04</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="QUIC-FEC">[QUIC-FEC]</dt>
-      <dd>
+        <dd>
 <span class="refAuthor">Michel, F.</span>, <span class="refAuthor">De Coninck, Q.</span>, and <span class="refAuthor">O. Bonaventure</span>, <span class="refTitle">"QUIC-FEC: Bringing the benefits of Forward Erasure Correction to QUIC"</span>, <span class="seriesInfo">2019 IFIP Networking Conference (IFIP Networking)</span>, <span class="seriesInfo">DOI 10.23919/ifipnetworking.2019.8816838</span>, <time datetime="2019-05" class="refDate">May 2019</time>, <span>&lt;<a href="https://doi.org/10.23919/ifipnetworking.2019.8816838">https://doi.org/10.23919/ifipnetworking.2019.8816838</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC6865">[RFC6865]</dt>
+        <dd>
+<span class="refAuthor">Roca, V.</span>, <span class="refAuthor">Cunche, M.</span>, <span class="refAuthor">Lacan, J.</span>, <span class="refAuthor">Bouabdallah, A.</span>, and <span class="refAuthor">K. Matsuzono</span>, <span class="refTitle">"Simple Reed-Solomon Forward Error Correction (FEC) Scheme for FECFRAME"</span>, <span class="seriesInfo">RFC 6865</span>, <span class="seriesInfo">DOI 10.17487/RFC6865</span>, <time datetime="2013-02" class="refDate">February 2013</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc6865">https://www.rfc-editor.org/rfc/rfc6865</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="rQUIC">[rQUIC]</dt>
+      <dd>
+<span class="refAuthor">Garrido, P.</span>, <span class="refAuthor">Sanchez, I.</span>, <span class="refAuthor">Ferlin, S.</span>, <span class="refAuthor">Aguero, R.</span>, and <span class="refAuthor">O. Alay</span>, <span class="refTitle">"rQUIC: Integrating FEC with QUIC for Robust Wireless Communications"</span>, <span class="seriesInfo">2019 IEEE Global Communications Conference (GLOBECOM)</span>, <span class="seriesInfo">DOI 10.1109/globecom38437.2019.9013401</span>, <time datetime="2019-12" class="refDate">December 2019</time>, <span>&lt;<a href="https://doi.org/10.1109/globecom38437.2019.9013401">https://doi.org/10.1109/globecom38437.2019.9013401</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 </dl>
 </section>
