@@ -419,7 +419,7 @@ This section defines the new transport parameters used to negociate and
 parametrize the FEC extension described in this document.
 
 
-## enable_fec (0xfec)
+## enable_fec (0xcafec)
 {: #sec-enable-fec-tp}
 
 The use of the FEC extension is negociated using the enable_fec transport
@@ -436,7 +436,7 @@ the QUIC endpoint MUST NOT use any frame or mechanism described in this
 document.
 
 
-## decoder_fec_scheme (0xfecd)
+## decoder_fec_scheme (0xcafecd)
 {: #sec-decoder-fec-scheme-tp}
 
 Each QUIC endpoint uses the decoder_fec_scheme transport parameter to
@@ -454,7 +454,7 @@ When the decoder_fec_scheme parameter is not advertized by the peer,
 the QUIC sender MUST NOT send any repair symbol.
 
 
-## initial_coding_window (0xfecc)
+## initial_coding_window (0xcafecc)
 {: #sec-initial-coding-window-tp}
 
 Each QUIC endpoint uses the initial_coding_window transport parameter to
@@ -491,9 +491,9 @@ experiments.
 
 Parameter ID | Parameter name | Specification
 ---------|---------------------------------------
-0xfec    | enable_fec             | {{sec-enable-fec-tp}}
-0xfecd   | decoder_fec_scheme     | {{sec-decoder-fec-scheme-tp}}
-0xfecc   | initial_coding_window  | {{sec-initial-coding-window-tp}}
+0xcafec    | enable_fec             | {{sec-enable-fec-tp}}
+0xcafecd   | decoder_fec_scheme     | {{sec-decoder-fec-scheme-tp}}
+0xcafecc   | initial_coding_window  | {{sec-initial-coding-window-tp}}
 {: #iana-transport-parameters title="New transport parameters"}
 
 
@@ -501,11 +501,11 @@ Parameter ID | Parameter name | Specification
 
 Frame ID | Frame name | Specification
 ---------|---------------------------------------
-0xfec    | REPAIR          | {{sec-repair-frame}}
-0xfec55  | SOURCE_SYMBOL   | {{sec-source-symbol-frame}}
-0xfec1d  | SID             | {{sec-sid-frame}}
-0xfecac  | SYMBOL_ACK      | {{sec-symbol-ack-frame}}
-0xfecc0d | FEC_WINDOW      | {{sec-fec-window-frame}}
+0xcafec    | REPAIR          | {{sec-repair-frame}}
+0xcafec55  | SOURCE_SYMBOL   | {{sec-source-symbol-frame}}
+0xcafec1d  | SID             | {{sec-sid-frame}}
+0xcafecac  | SYMBOL_ACK      | {{sec-symbol-ack-frame}}
+0xcafecc0d | FEC_WINDOW      | {{sec-fec-window-frame}}
 {: #iana-frames title="New frames"}
 
 # Acknowledgments
