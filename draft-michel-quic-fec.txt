@@ -4,8 +4,8 @@
 
 QUIC                                                           F. Michel
 Internet-Draft                                                 UCLouvain
-Intended status: Informational                           13 October 2022
-Expires: 16 April 2023
+Intended status: Informational                           20 October 2022
+Expires: 23 April 2023
 
 
            Forward Erasure Correction for QUIC loss recovery
@@ -49,7 +49,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 16 April 2023.
+   This Internet-Draft will expire on 23 April 2023.
 
 Copyright Notice
 
@@ -98,9 +98,8 @@ Table of Contents
 
 1.  Introduction
 
-   QUIC version 1 [QUICv1] does not retransmit neither frames nor
-   packets upon network losses.  Instead, the lost information is sent
-   again in new frames carried by new packets.  Retransmitting the lost
+   The QUIC protocol [QUICv1] relies on retransmissions to ensure the
+   reliable delivery of stream data.  Retransmitting the lost
    information requires the loss recovery mechanism to identify lost
    packets which may take up to several hundreds of milliseconds
    [QUIC-RECOVERY].  Depending on their delay-sensitivity, some
@@ -170,35 +169,37 @@ Table of Contents
    the wire between the two QUIC endpoints.  Figure 1 illustrates how
    symbols can be received from both channels.
 
-               Network Channel              Coding Channel
+            Network Channel              Coding Channel
 
-   Sender                         Receiver               Decoder
-     |                                |                    |
-     |  PACKET(1)[SOURCE_SYMBOL(1)]   |                    |
-     |------------------------------->|  SOURCE_SYMBOL(1)  |
-     |                                |------------------->|
-     |  PACKET(2)[SOURCE_SYMBOL(2)]   |                    |
-     |--------------x                 |                    |
-     |                                |                    |
-     |  PACKET(3)[REPAIR_SYMBOL]      |                    |
-     |------------------------------->|    REPAIR_SYMBOL   |
-     |                                |------------------->|
-     |                                |                    |(recomputes)
-     |                                |                    |(the source)
-     |                                |                    |(symbol    )
-     |                                |  SOURCE_SYMBOL(2)  |
-     |                                |<-------------------|
-     |                                |                    |
-     |                                |                    |
+Sender                         Receiver               Decoder      Application
+  |                                |                    |              |
+  |  PACKET(1)[SOURCE_SYMBOL(1)]   |                    |              |
+  |------------------------------->|  SOURCE_SYMBOL(1)  |  APP_DATA(1) |
+  |                                |------------------->|------------->|
+  |  PACKET(2)[SOURCE_SYMBOL(2)]   |                    |              |
+  |--------------x                 |                    |              |
+  |                                |                    |              |
+  |  PACKET(3)[REPAIR_SYMBOL]      |                    |              |
+  |------------------------------->|    REPAIR_SYMBOL   |              |
+  |                                |------------------->|              |
+  |                                |                    |(recomputes)  |
+  |                                |                    |(the source)  |
+  |                                |                    |(symbol    )  |
+  |                                |                    |              |
+  |                                |                    |  APP_DATA(2) |
+  |                                |                    |------------->|
+  |                                |                    |              |
+  |                                |                    |              |
 
-          Figure 1: Receiving symbols through the network channel
+       Figure 1: Receiving symbols through the network channel
 
    In this illustration, the sender sends three QUIC packets through the
    network channel.  Packets 1 and 2 carry one source symbol each and
    packet 3 carries one repair symbol protecting the two source symbols.
-   Packet 2 is lost due to network imperfection preventing
-   SOURCE_SYMBOL(2) from being received through the network channel.
-   The FEC decoder reconstructs SOURCE_SYMBOL(2) by combining
+   The source symbols each carry application data (APP_DATA), e.g.
+   through STREAM frames Packet 2 is lost due to network imperfection
+   preventing SOURCE_SYMBOL(2) from being received through the network
+   channel.  The FEC decoder reconstructs SOURCE_SYMBOL(2) by combining
    SOURCE_SYMBOL(1) and REPAIR_SYMBOL.  SOURCE_SYMBOL(2) is thus
    received through the coding channel.  Note that SOURCE_SYMBOL(2) is
    not received as a packet since QUIC packets are only exchanged
@@ -386,8 +387,10 @@ Table of Contents
 
                      Figure 7: FEC_WINDOW frame format
 
-   The Window Epoch field is a unique identifier increasing by exactly
-   one for each new FEC_WINDOW frame sent by the FEC receiver.
+   The FEC Window Epoch field is a unique identifier for the announced
+   window.  The first epoch is set to 0.  Each time a new FEC_WINDOW
+   frame is sent, the FEC Window Epoch field is increased by exactly
+   one.
 
    The Window Size field indicates the number of symbols that can be
    stored simultaneously by the receiver.  The Window Size value
@@ -462,9 +465,11 @@ Table of Contents
    a FEC scheme using Reed Solomon could be identified by the ID 0x0 and
    a FEC scheme using LDPC could be identified by 0x1.
 
-   This document does not specify nor identify any FEC scheme yet.  When
-   the decoder_fec_scheme parameter is not advertized by the peer, the
-   QUIC sender MUST NOT send any repair symbol.
+   This document does not specify nor identify any FEC scheme yet.
+   Future versions of this document will provide ways to format FEC
+   scheme-specific payload for REPAIR frames.  When the
+   decoder_fec_scheme parameter is not advertized by the peer, the QUIC
+   sender MUST NOT send any repair symbol.
 
 7.3.  initial_coding_window (0xfecc)
 
