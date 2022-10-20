@@ -6,15 +6,16 @@
 <meta content="initial-scale=1.0" name="viewport">
 <title>Forward Erasure Correction for QUIC loss recovery</title>
 <meta content="François Michel" name="author">
+<meta content="Olivier Bonaventure" name="author">
 <meta content="
        This documents lays down the QUIC protocol design considerations
 needed for QUIC to apply Forward Erasure Correction on the data sent
 through the network. 
     " name="description">
 <meta content="xml2rfc 3.15.1" name="generator">
-<meta content="next generation" name="keyword">
-<meta content="unicorn" name="keyword">
-<meta content="sparkling distributed ledger" name="keyword">
+<meta content="FEC" name="keyword">
+<meta content="network coding" name="keyword">
+<meta content="QUIC" name="keyword">
 <meta content="draft-michel-quic-fec-latest" name="ietf.draft">
 <!-- Generator version information:
   xml2rfc 3.15.1
@@ -1042,7 +1043,7 @@ svg :is([stroke="fill"], [fill^="#fff"]) {
 <td class="right">October 2022</td>
 </tr></thead>
 <tfoot><tr>
-<td class="left">Michel</td>
+<td class="left">Michel &amp; Bonaventure</td>
 <td class="center">Expires 23 April 2023</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
@@ -1059,13 +1060,17 @@ svg :is([stroke="fill"], [fill^="#fff"]) {
 <time datetime="2022-10-20" class="published">20 October 2022</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
-<dd class="intended-status">Informational</dd>
+<dd class="intended-status">Experimental</dd>
 <dt class="label-expires">Expires:</dt>
 <dd class="expires"><time datetime="2023-04-23">23 April 2023</time></dd>
-<dt class="label-authors">Author:</dt>
+<dt class="label-authors">Authors:</dt>
 <dd class="authors">
 <div class="author">
       <div class="author-name">F. Michel</div>
+<div class="org">UCLouvain</div>
+</div>
+<div class="author">
+      <div class="author-name">O. Bonaventure</div>
 <div class="org">UCLouvain</div>
 </div>
 </dd>
@@ -1238,7 +1243,7 @@ through the network.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12">
-            <p id="section-toc.1-1.12.1"><a href="#appendix-A" class="auto internal xref"></a><a href="#name-authors-address" class="internal xref">Author's Address</a></p>
+            <p id="section-toc.1-1.12.1"><a href="#appendix-A" class="auto internal xref"></a><a href="#name-authors-addresses" class="internal xref">Authors' Addresses</a></p>
 </li>
         </ul>
 </nav>
@@ -1940,8 +1945,8 @@ experiments.<a href="#section-9-1" class="pilcrow">¶</a></p>
 </section>
 <div id="authors-addresses">
 <section id="appendix-A">
-      <h2 id="name-authors-address">
-<a href="#name-authors-address" class="section-name selfRef">Author's Address</a>
+      <h2 id="name-authors-addresses">
+<a href="#name-authors-addresses" class="section-name selfRef">Authors' Addresses</a>
       </h2>
 <address class="vcard">
         <div dir="auto" class="left"><span class="fn nameRole">François Michel</span></div>
@@ -1949,6 +1954,14 @@ experiments.<a href="#section-9-1" class="pilcrow">¶</a></p>
 <div class="email">
 <span>Email:</span>
 <a href="mailto:francois.michel@uclouvain.be" class="email">francois.michel@uclouvain.be</a>
+</div>
+</address>
+<address class="vcard">
+        <div dir="auto" class="left"><span class="fn nameRole">Olivier Bonaventure</span></div>
+<div dir="auto" class="left"><span class="org">UCLouvain</span></div>
+<div class="email">
+<span>Email:</span>
+<a href="mailto:olivier.bonaventure@uclouvain.be" class="email">olivier.bonaventure@uclouvain.be</a>
 </div>
 </address>
 </section>

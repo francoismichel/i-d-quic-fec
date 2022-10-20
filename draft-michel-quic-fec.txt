@@ -3,9 +3,9 @@
 
 
 QUIC                                                           F. Michel
-Internet-Draft                                                 UCLouvain
-Intended status: Informational                           20 October 2022
-Expires: 23 April 2023
+Internet-Draft                                            O. Bonaventure
+Intended status: Experimental                                  UCLouvain
+Expires: 23 April 2023                                   20 October 2022
 
 
            Forward Erasure Correction for QUIC loss recovery
@@ -94,7 +94,7 @@ Table of Contents
    References
      Normative References
      Informative References
-   Author's Address
+   Authors' Addresses
 
 1.  Introduction
 
@@ -588,8 +588,13 @@ Informative References
               DOI 10.23919/ifipnetworking.2019.8816838, May 2019,
               <https://doi.org/10.23919/ifipnetworking.2019.8816838>.
 
-Author's Address
+Authors' Addresses
 
    François Michel
    UCLouvain
    Email: francois.michel@uclouvain.be
+
+
+   Olivier Bonaventure
+   UCLouvain
+   Email: olivier.bonaventure@uclouvain.be
