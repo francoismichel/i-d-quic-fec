@@ -492,9 +492,9 @@ to decode it in a reasonable amount of time.
 
 # IANA Considerations
 
-Disclaimer: the IDs defined in this document are present for experimental
-purposes only. They are not requested codepoints and are subject to change
-in the next versions of this document.
+*Disclaimer: the IDs defined in this section are present for experimental*
+*purposes only. They are not requested codepoints and are subject to change*
+*in the next versions of this document.*
 
 This document defines three new transport parameters and five new frames. The
 SID and SOURCE_SYMBOL frames serve the same purpose. One of them will be
