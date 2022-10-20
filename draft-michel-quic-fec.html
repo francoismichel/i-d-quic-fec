@@ -1330,25 +1330,25 @@ from both channels.<a href="#section-3-1" class="pilcrow">¶</a></p>
 <pre>
             Network Channel              Coding Channel
 
-Sender                         Receiver               Decoder      Application
-  |                                |                    |              |
-  |  PACKET(1)[SOURCE_SYMBOL(1)]   |                    |              |
-  |-------------------------------&gt;|  SOURCE_SYMBOL(1)  |  APP_DATA(1) |
-  |                                |-------------------&gt;|-------------&gt;|
-  |  PACKET(2)[SOURCE_SYMBOL(2)]   |                    |              |
-  |--------------x                 |                    |              |
-  |                                |                    |              |
-  |  PACKET(3)[REPAIR_SYMBOL]      |                    |              |
-  |-------------------------------&gt;|    REPAIR_SYMBOL   |              |
-  |                                |-------------------&gt;|              |
-  |                                |                    |(recomputes)  |
-  |                                |                    |(the source)  |
-  |                                |                    |(symbol    )  |
-  |                                |                    |              |
-  |                                |                    |  APP_DATA(2) |
-  |                                |                    |-------------&gt;|
-  |                                |                    |              |
-  |                                |                    |              |
+Sender                       Receiver             Decoder    Application
+  |                              |                    |              |
+  |  PACKET(1)[SOURCE_SYMBOL(1)] |                    |              |
+  |-----------------------------&gt;|  SOURCE_SYMBOL(1)  |  APP_DATA(1) |
+  |                              |-------------------&gt;|-------------&gt;|
+  |  PACKET(2)[SOURCE_SYMBOL(2)] |                    |              |
+  |--------------x               |                    |              |
+  |                              |                    |              |
+  |  PACKET(3)[REPAIR_SYMBOL]    |                    |              |
+  |-----------------------------&gt;|    REPAIR_SYMBOL   |              |
+  |                              |-------------------&gt;|              |
+  |                              |                    |(recomputes)  |
+  |                              |                    |(the source)  |
+  |                              |                    |(symbol    )  |
+  |                              |                    |              |
+  |                              |                    |  APP_DATA(2) |
+  |                              |                    |-------------&gt;|
+  |                              |                    |              |
+  |                              |                    |              |
 </pre>
 </div>
 <figcaption><a href="#figure-1" class="selfRef">Figure 1</a>:
