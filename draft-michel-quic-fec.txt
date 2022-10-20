@@ -516,9 +516,9 @@ Sender                       Receiver             Decoder    Application
          +==============+=======================+===============+
          | 0x238ffeceXX | enable_fec            | Section 7.1   |
          +--------------+-----------------------+---------------+
-         | 0x5dcdfecd   | decoder_fec_scheme    | Section 7.2   |
+         | 0x238ffecd   | decoder_fec_scheme    | Section 7.2   |
          +--------------+-----------------------+---------------+
-         | 0xccb7fecc   | initial_coding_window | Section 7.3   |
+         | 0x238ffecc   | initial_coding_window | Section 7.3   |
          +--------------+-----------------------+---------------+
 
                     Table 2: New transport parameters
@@ -532,15 +532,15 @@ Sender                       Receiver             Decoder    Application
              +==============+===============+===============+
              | Frame ID     | Frame name    | Specification |
              +==============+===============+===============+
-             | 0xf0d40fec   | REPAIR        | Section 5.3   |
+             | 0x32a80fec   | REPAIR        | Section 5.3   |
              +--------------+---------------+---------------+
-             | 0xc4450fec55 | SOURCE_SYMBOL | Section 5.2.1 |
+             | 0x32a80fec55 | SOURCE_SYMBOL | Section 5.2.1 |
              +--------------+---------------+---------------+
-             | 0xcfb059ec1d | SID           | Section 5.2.2 |
+             | 0x32a80fec1d | SID           | Section 5.2.2 |
              +--------------+---------------+---------------+
              | 0x32a80fecac | SYMBOL_ACK    | Section 5.5   |
              +--------------+---------------+---------------+
-             | 0x374dfecc0d | FEC_WINDOW    | Section 5.4   |
+             | 0x32a80fecc0 | FEC_WINDOW    | Section 5.4   |
              +--------------+---------------+---------------+
 
                            Table 3: New frames
