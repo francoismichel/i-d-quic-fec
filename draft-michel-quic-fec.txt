@@ -500,9 +500,9 @@ Sender                       Receiver             Decoder    Application
 
 9.  IANA Considerations
 
-   Disclaimer: the IDs defined in this document are present for
-   experimental purposes only.  They are not requested codepoints and
-   are subject to change in the next versions of this document.
+   _Disclaimer: the IDs defined in this section are present for
+   experimental_ _purposes only.  They are not requested codepoints and
+   are subject to change_ _in the next versions of this document._
 
    This document defines three new transport parameters and five new
    frames.  The SID and SOURCE_SYMBOL frames serve the same purpose.
