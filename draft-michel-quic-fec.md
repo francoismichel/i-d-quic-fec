@@ -40,8 +40,13 @@ normative:
 
 informative:
   QUIC-FEC: DOI.10.23919/IFIPNetworking.2019.8816838
+  rQUIC: DOI.10.1109/GLOBECOM38437.2019.9013401
   FlEC: DOI.10.1109/TNET.2022.3195611
   I-D.swett-nwcrg-coding-for-quic:
+  I-D.roca-nwcrg-rlc-fec-scheme-for-quic:
+  I-D.irtf-nwcrg-tetrys:
+  RFC6865:
+
 
 
 
@@ -68,7 +73,7 @@ ensure a good quality of experience to their users.
 Works has already been done to consider the use of
 Forward Erasure Correction (FEC) for the QUIC protocol to ensure timely
 data delivery for delay-sensitive applications {{QUIC-FEC}} {{FlEC}}
-{{I-D.swett-nwcrg-coding-for-quic}}.
+{{rQUIC}} {{I-D.swett-nwcrg-coding-for-quic}}.
 This document defines additions to the QUIC protocol to extend its
 loss recovery mechanism and make it able to recover from packet
 losses prior to retransmission using FEC.
@@ -447,7 +452,14 @@ identifier of the desired FEC scheme.
 For instance, a FEC scheme using Reed Solomon could be identified by the
 ID 0x0 and a FEC scheme using LDPC could be identified by 0x1.
 
-This document does not specify nor identify any FEC scheme yet. Future
+This document does not specify nor identify any FEC scheme yet.
+Several FEC schemes have been proposed
+{{I-D.roca-nwcrg-rlc-fec-scheme-for-quic}} {{RFC6865}}
+{{I-D.irtf-nwcrg-tetrys}}. The next version of this
+document will detail how some of these schemes can be directly integrated
+in QUIC.
+
+Future
 versions of this document will provide ways to format FEC scheme-specific
 payload for REPAIR frames.
 When the decoder_fec_scheme parameter is not advertized by the peer,
