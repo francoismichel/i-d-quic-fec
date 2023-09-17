@@ -1,0 +1,2005 @@
+<!DOCTYPE html>
+<html lang="en" class="Internet-Draft">
+<head>
+<meta charset="utf-8">
+<meta content="Common,Latin" name="scripts">
+<meta content="initial-scale=1.0" name="viewport">
+<title>Forward Erasure Correction for QUIC loss recovery</title>
+<meta content="François Michel" name="author">
+<meta content="Olivier Bonaventure" name="author">
+<meta content="
+       This documents lays down the QUIC protocol design considerations
+needed for QUIC to apply Forward Erasure Correction on the data sent
+through the network. 
+    " name="description">
+<meta content="xml2rfc 3.15.1" name="generator">
+<meta content="FEC" name="keyword">
+<meta content="network coding" name="keyword">
+<meta content="QUIC" name="keyword">
+<meta content="draft-michel-quic-fec-latest" name="ietf.draft">
+<!-- Generator version information:
+  xml2rfc 3.15.1
+    Python 3.10.5
+    appdirs 1.4.4
+    ConfigArgParse 1.5.3
+    google-i18n-address 2.5.2
+    html5lib 1.1
+    intervaltree 3.1.0
+    Jinja2 3.1.2
+    kitchen 1.2.6
+    lxml 4.9.1
+    MarkupSafe 2.1.1
+    pycountry 22.3.5
+    PyYAML 6.0
+    requests 2.27.1
+    setuptools 59.4.0
+    six 1.16.0
+-->
+<link href="draft-michel-quic-fec.xml" rel="alternate" type="application/rfc+xml">
+<link href="#copyright" rel="license">
+<style type="text/css">@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-cyrillic.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-cyrillic.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: local('Lora SemiBold'), local('Lora-SemiBold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-semibold-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Cabin Condensed';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: local('Cabin Condensed SemiBold'), local('CabinCondensed-SemiBold'), url('https://martinthomson.github.io/rfc-css/fonts/cabincondensed-semibold-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Cabin Condensed';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: local('Cabin Condensed SemiBold'), local('CabinCondensed-SemiBold'), url('https://martinthomson.github.io/rfc-css/fonts/cabincondensed-semibold-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Cabin Condensed';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: local('Cabin Condensed SemiBold'), local('CabinCondensed-SemiBold'), url('https://martinthomson.github.io/rfc-css/fonts/cabincondensed-semibold-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Oxygen Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Oxygen Mono'), local('OxygenMono-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/oxygenmono-regular-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Oxygen Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Oxygen Mono'), local('OxygenMono-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/oxygenmono-regular-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root {
+  color-scheme: light dark;
+  --background-color: #fff;
+  --text-color: #222;
+  --title-color: #191919;
+  --link-color: #2a6496;
+  --highlight-color: #f9f9f9;
+  --line-color: #eee;
+  --pilcrow-weak: #ddd;
+  --pilcrow-strong: #bbb;
+  --small-font-size: 14.5px;
+  --font-mono: 'Oxygen Mono', monospace;
+  scrollbar-color: #bbb #eee;
+}
+body {
+  max-width: 600px;
+  margin: 75px auto;
+  padding: 0 5px;
+  color: var(--text-color);
+  background-color: var(--background-color);
+  font: 16px/22px "Lora", serif;
+  scroll-behavior: smooth;
+}
+
+.ears {
+  display: none;
+}
+
+/* headings */
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Cabin Condensed", sans-serif;
+  font-weight: 600;
+  margin: 0.8em 0 0.3em;
+  font-size-adjust: 0.5;
+  color: var(--title-color);
+}
+h1#title {
+  font-size: 32px;
+  line-height: 40px;
+  clear: both;
+}
+h1#title, h1#rfcnum {
+  margin: 1.5em 0 0.2em;
+}
+h1#rfcnum + h1#title {
+  margin: 0.2em 0;
+}
+
+h1, h2, h3 {
+  font-size: 22px;
+  line-height: 27px;
+}
+h4, h5, h6 {
+  font-size: 20px;
+  line-height: 24px;
+}
+
+/* general structure */
+.author {
+  padding-bottom: 0.3em;
+}
+#abstract+p {
+  font-size: 18px;
+  line-height: 24px;
+}
+#abstract+p code, #abstract+p samp, #abstract+p tt {
+  font-size: 16px;
+  line-height: 0;
+}
+
+p {
+  padding: 0;
+  margin: 0.5em 0;
+  text-align: left;
+}
+div {
+  margin: 0;
+}
+.alignRight.art-text {
+  background-color: var(--highlight-color);
+  border: 1px solid var(--line-color);
+  border-radius: 3px;
+  padding: 0.5em 1em 0;
+  margin-bottom: 0.5em;
+}
+.alignRight.art-text pre {
+  padding: 0;
+  width: auto;
+}
+.alignRight {
+  margin: 1em 0;
+}
+.alignRight > *:first-child {
+  border: none;
+  margin: 0;
+  float: right;
+  clear: both;
+}
+.alignRight > *:nth-child(2) {
+  clear: both;
+  display: block;
+  border: none;
+}
+svg {
+  display: block;
+}
+/* font-family isn't space-separated, but =~ will have to do */
+svg[font-family~="monospace" i], svg [font-family~="monospace" i] {
+  font-family: var(--font-mono);
+}
+.alignCenter.art-text {
+  background-color: var(--highlight-color);
+  border: 1px solid var(--line-color);
+  border-radius: 3px;
+  padding: 0.5em 1em 0;
+  margin-bottom: 0.5em;
+}
+.alignCenter.art-text pre {
+  padding: 0;
+  width: auto;
+}
+.alignCenter {
+  margin: 1em 0;
+}
+.alignCenter > *:first-child {
+  border: none;
+  /* this isn't optimal, but it's an existence proof.  PrinceXML doesn't
+     support flexbox yet.
+  */
+  display: table;
+  margin: 0 auto;
+}
+
+/* lists */
+ol, ul {
+  padding: 0;
+  margin: 0 0 0.5em 2em;
+}
+:is(ol, ul) :is(ol, ul) {
+  margin-left: 1em;
+}
+li {
+  margin: 0 0 0.25em 0;
+}
+.ulCompact li {
+  margin: 0;
+}
+ul.empty, .ulEmpty {
+  list-style-type: none;
+}
+ul.empty li, .ulEmpty li {
+  margin-top: 0.5em;
+}
+:is(ul, ol).compact, .ulCompact, .olCompact {
+  line-height: 100%;
+  margin: 0 0 0 2em;
+}
+
+/* definition lists */
+dl {
+  clear: left;
+  --indent: 3ch;
+  /* --indent: attr(indent ch); not supported in any browser, but we can dream */
+}
+dl > dt {
+  float: left;
+  margin-right: 1em;
+  min-width: 20ch;
+}
+dl.dlNewline > dt {
+  float: none;
+}
+dl > dd {
+  margin-bottom: .8em;
+  margin-left: var(--indent) !important; /* stupid element overrides */
+  min-height: 2ex;
+}
+:is(dl.compact, .dlCompact) > dd {
+  margin-bottom: 0;
+}
+:is(dl.compact, .dlCompact) > dd > :is(:first-child, .break:first-child + *) {
+  margin-top: 0;
+}
+:is(dl.compact, .dlCompact) > dd > :is(:last-child) {
+  margin-bottom: 0;
+}
+dl > dd > dl {
+  margin-top: 0.5em;
+  margin-bottom: 0;
+}
+dl .break {
+  display: none;
+}
+
+/* links */
+a, a[href].selfRef:hover {
+  text-decoration: none;
+}
+a[href].selfRef {
+  color: var(--text-color);
+}
+a[href] {
+  color: var(--link-color);
+}
+a[href]:hover {
+  text-decoration: underline;
+}
+a[href].selfRef:hover {
+  background-color: var(--highlight-color);
+}
+a.xref {
+  white-space: nowrap;
+}
+
+/* Figures */
+tt, code, pre {
+  background-color: var(--highlight-color);
+  font: 14px/22px var(--font-mono);
+}
+tt, code {
+  /* changing the font for inline elements leads to different ascender
+     and descender heights; as we want to retain baseline alignment,
+     remove leading to avoid altering the final height of lines */
+  line-height: 0;
+}
+:is(h1, h2, h3, h4, h5, h6) :is(tt, code) {
+  font-size: 84%;
+}
+pre {
+  border: 1px solid var(--line-color);
+  font-size: 13.5px;
+  line-height: 16px;
+  letter-spacing: -0.2px;
+  margin: 5px;
+  padding: 5px;
+}
+img {
+  max-width: 100%;
+}
+figure {
+  margin: 0.5em 0;
+  padding: 0;
+}
+figure blockquote {
+  margin: 0.8em 0.4em 0.4em;
+}
+figcaption, caption {
+  font-style: italic;
+  margin: 0.5em 1.5em;
+  text-align: left;
+}
+@media screen {
+  /* Auto-collapse boilerplate. */
+  :is(#status-of-memo, #copyright) p {
+    margin: -2px 0;
+    max-height: 0;
+    transition: max-height 2s ease, margin 0.5s ease 0.5s;
+    overflow: hidden;
+  }
+  :is(#status-of-memo, #copyright):hover p,
+  :is(#status-of-memo, #copyright) h2:target ~ p {
+    margin: 0.5em 0;
+    max-height: 500px;
+    overflow: auto;
+  }
+  pre, svg {
+    display: inline-block;
+    overflow-x: auto;
+  }
+  pre {
+    max-width: 100%;
+    width: calc(100% - 22px - 1em);
+  }
+  svg {
+    max-width: calc(100% - 22px - 1em);
+  }
+  figure pre {
+    display: block;
+    width: calc(100% - 25px);
+  }
+  :is(pre, svg) + .pilcrow {
+    display: inline-block;
+    vertical-align: text-bottom;
+    padding-bottom: 8px;
+  }
+}
+
+/* aside, blockquote */
+aside, blockquote {
+  margin-left: 0;
+  padding: 0 2em;
+  font-style: italic;
+}
+blockquote {
+  margin: 1em 0;
+}
+cite {
+  display: block;
+  text-align: right;
+  font-style: italic;
+}
+
+/* tables */
+table {
+  max-width: 100%;
+  margin: 0 0 1em;
+  border-collapse: collapse;
+}
+table.right {
+  margin-left: auto;
+}
+table.center {
+  margin-left: auto;
+  margin-right: auto;
+}
+table.left {
+  margin-right: auto;
+}
+thead, tbody {
+  border: 1px solid var(--line-color);
+}
+th, td {
+  text-align: left;
+  vertical-align: top;
+  padding: 5px 10px;
+}
+th {
+  background-color: var(--line-color);
+}
+:is(tr:nth-child(2n), thead+tbody > tr:nth-child(2n+1)) > td {
+  background-color: var(--background-color);
+}
+:is(tr:nth-child(2n+1), thead+tbody > tr:nth-child(2n)) > td {
+  background-color: var(--highlight-color);
+}
+table caption {
+  margin: 0;
+  padding: 3px 0 3px 1em;
+}
+table p {
+  margin: 0;
+}
+
+/* pilcrow */
+a.pilcrow {
+  margin-left: 3px;
+  opacity: 0.2;
+  user-select: none;
+}
+a.pilcrow[href] { color: var(--pilcrow-weak); }
+a.pilcrow[href]:hover { text-decoration: none; }
+@media not print {
+  :hover > a.pilcrow {
+    opacity: 1;
+  }
+  a.pilcrow[href]:hover {
+    color: var(--pilcrow-strong);
+    background-color: transparent;
+  }
+}
+@media print {
+  a.pilcrow {
+    display: none;
+  }
+}
+
+/* misc */
+hr {
+  border: 0;
+  border-top: 1px solid var(--line-color);
+}
+.bcp14 {
+  font-variant: small-caps;
+  font-weight: 600;
+  font-size: 14.5px;
+}
+.role {
+  font-variant: all-small-caps;
+}
+
+/* info block */
+#identifiers {
+  margin: 0;
+  font-size: var(--small-font-size);
+  line-height: 18px;
+  --identifier-width: 15ch;
+}
+#identifiers dt {
+  width: var(--identifier-width);
+  min-width: var(--identifier-width);
+  clear: left;
+  float: left;
+  text-align: right;
+}
+#identifiers dd {
+  margin: 0;
+  margin-left: calc(1em + var(--identifier-width)) !important;
+  min-width: 5em;
+}
+#identifiers .authors .author {
+  display: inline-block;
+  margin-right: 1.5em;
+}
+#identifiers .authors .org {
+  font-style: italic;
+}
+
+/* The prepared/rendered info at the very bottom of the page */
+.docInfo {
+  color: #999;
+  font-size: 0.9em;
+  font-style: italic;
+  margin-top: 2em;
+}
+.docInfo .prepared {
+  float: left;
+}
+.docInfo .prepared {
+  float: right;
+}
+
+/* table of contents */
+#toc {
+  padding: 0.75em 0 2em 0;
+  margin-bottom: 1em;
+}
+#toc nav ul {
+  margin: 0 0.5em 0 0;
+  padding: 0;
+  list-style: none;
+}
+#toc nav li {
+  line-height: 1.3em;
+  margin: 0.75em 0;
+  padding-left: 1.2em;
+  text-indent: -1.2em;
+}
+#toc a.xref {
+  white-space: normal;
+}
+/* references */
+.references dt {
+  text-align: right;
+  font-weight: bold;
+  min-width: 7em;
+}
+.references dt:target::before {
+  content: "⇒";
+  width: 15px;
+  margin: 0 10px 0 -25px;
+}
+.references dd {
+  margin-left: 8em !important;
+  overflow: auto;
+}
+
+.refInstance {
+  margin-bottom: 1.25em;
+}
+
+.references .ascii {
+  margin-bottom: 0.25em;
+}
+
+/* index */
+#rfc\.index\.index + ul {
+  margin-left: 0;
+}
+
+/* authors */
+address.vcard {
+  font-style: normal;
+  margin: 1em 0;
+}
+address.vcard .nameRole {
+  font-weight: 700;
+  margin-left: 0;
+}
+address.vcard .label {
+  margin: 0.5em 0;
+}
+address.vcard .type {
+  display: none;
+}
+.alternative-contact {
+  margin: 1.5em 0 1em;
+}
+hr.addr {
+  border-top: 1px dashed;
+  margin: 0;
+  color: #ddd;
+  max-width: calc(100% - 16px);
+}
+@media (min-width: 500px) {
+  #authors-addresses > section {
+    column-count: 2;
+    column-gap: 20px;
+  }
+  #authors-addresses > section > h2 {
+    column-span: all;
+  }
+  /* hack for break-inside: avoid-column */
+  #authors-addresses address {
+    display: inline-block;
+    break-inside: avoid-column;
+  }
+}
+
+.rfcEditorRemove p:first-of-type {
+  font-style: italic;
+}
+.cref {
+  background-color: rgba(249, 232, 105, 0.3);
+  padding: 2px 4px;
+}
+.crefSource {
+  font-style: italic;
+}
+/* alternative layout for smaller screens */
+@media screen and (max-width: 929px) {
+  #toc {
+    position: fixed;
+    z-index: 2;
+    top: 0;
+    right: 0;
+    padding: 0;
+    margin: 0;
+    border-bottom: 1px solid #ccc;
+    opacity: 0.6;
+  }
+  #toc.active {
+      opacity: 1;
+  }
+  #toc h2 {
+    margin: 0;
+    padding: 2px 0 2px 6px;
+    padding-right: 1em;
+    font-size: 18px;
+    line-height: 24px;
+    min-width: 190px;
+    text-align: right;
+    background-color: #444;
+    color: white;
+    cursor: pointer;
+  }
+  #toc h2::before { /* css hamburger */
+    float: right;
+    position: relative;
+    width: 1em;
+    height: 1px;
+    left: -164px;
+    margin: 8px 0 0 0;
+    background: white none repeat scroll 0 0;
+    box-shadow: 0 4px 0 0 white, 0 8px 0 0 white;
+    content: "";
+  }
+  #toc nav {
+    display: none;
+    background-color: var(--background-color);
+    padding: 0.5em 1em 1em;
+    overflow: auto;
+    overscroll-behavior: contain;
+    height: calc(100vh - 48px);
+    border-left: 1px solid #ddd;
+  }
+  #toc.active nav {
+    display: block;
+  }
+  /* Make the collapsed ToC header render white on gray also when it's a link */
+  #toc h2 a,
+  #toc h2 a:link,
+  #toc h2 a:focus,
+  #toc h2 a:hover,
+  #toc a.toplink,
+  #toc a.toplink:hover {
+    color: white;
+    background-color: #444;
+    text-decoration: none;
+  }
+  #toc a.toplink {
+    margin-top: 2px;
+  }
+}
+
+/* alternative layout for wide screens */
+@media screen and (min-width: 930px) {
+  body {
+    padding-right: 360px;
+    padding-right: calc(min(180px + 20%, 500px));
+  }
+  #toc {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    right: calc(50vw - 480px);
+    width: 312px;
+    margin: 0;
+    padding: 0;
+    z-index: 1;
+  }
+  #toc h2 {
+    margin: 0;
+    padding: 0.25em 1em 1em 0;
+  }
+  #toc nav {
+    display: block;
+    height: calc(90vh - 84px);
+    bottom: 0;
+    padding: 0.5em 0 2em;
+    overflow: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+  #toc nav > ul  {
+    margin-bottom: 2em;
+  }
+  #toc ul {
+    margin: 0 0 0 4px;
+    font-size: var(--small-font-size);
+  }
+  #toc ul :is(p, li) {
+    margin: 2px 0;
+    line-height: 22px;
+  }
+  img { /* future proofing */
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+/* pagination */
+@media print {
+  body {
+    width: 100%;
+  }
+  p {
+    orphans: 3;
+    widows: 3;
+  }
+  #n-copyright-notice {
+    border-bottom: none;
+  }
+  #toc, #n-introduction {
+    page-break-before: always;
+  }
+  #toc {
+    border-top: none;
+    padding-top: 0;
+  }
+  figure, pre {
+    page-break-inside: avoid;
+  }
+  figure {
+    overflow: scroll;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+  }
+  h2+*, h3+*, h4+*, h5+*, h6+* {
+    page-break-before: avoid;
+  }
+  pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-size: 10pt;
+  }
+  table {
+    border: 1px solid #ddd;
+  }
+  td {
+    border-top: 1px solid #ddd;
+  }
+}
+
+@page :first {
+  padding-top: 0;
+  @top-left {
+    content: normal;
+    border: none;
+  }
+  @top-center {
+    content: normal;
+    border: none;
+  }
+  @top-right {
+    content: normal;
+    border: none;
+  }
+}
+
+@page {
+  size: A4;
+  margin-bottom: 45mm;
+  padding-top: 20px;
+}
+
+/* Changes introduced to fix issues found during implementation */
+
+/* Separate body from document info even without intervening H1 */
+section {
+  clear: both;
+}
+
+/* Top align author divs, to avoid names without organization dropping level with org names */
+.author {
+  vertical-align: top;
+}
+
+/* Style section numbers with more space between number and title */
+.section-number {
+  padding-right: 0.5em;
+}
+
+/* Add styling for a link in the ToC that points to the top of the document */
+a.toplink {
+  float: right;
+  margin: 8px 0.5em 0;
+}
+
+/* Provide styling for table cell text alignment */
+table .text-left {
+  text-align: left;
+}
+table .text-center {
+  text-align: center;
+}
+table .text-right {
+  text-align: right;
+}
+
+/* Make the alternative author contact information look less like just another
+   author, and group it closer with the primary author contact information */
+.alternative-contact {
+  margin: 0.5em 0 0.25em 0;
+}
+address .non-ascii {
+  margin: 0 0 0 2em;
+}
+
+/* With it being possible to set tables with alignment
+  left, center, and right, { width: 100%; } does not make sense */
+table {
+  width: auto;
+}
+
+/* Avoid reference text that sits in a block with very wide left margin,
+   because of a long floating dt label.*/
+.references dd {
+  overflow: visible;
+}
+
+/* Control caption placement */
+caption {
+  caption-side: bottom;
+}
+
+/* Limit the width of the author address vcard, so names in right-to-left
+   script don't end up on the other side of the page. */
+
+address.vcard {
+  max-width: 20em;
+  margin-right: auto;
+}
+
+/* For address alignment dependent on LTR or RTL scripts */
+address div.left {
+  text-align: left;
+}
+address div.right {
+  text-align: right;
+}
+
+/* Give the table caption label the same styling as the figcaption */
+
+@media print {
+  .toplink {
+    display: none;
+  }
+
+  /* avoid overwriting the top border line with the ToC header */
+  #toc {
+    padding-top: 1px;
+  }
+
+  /* Avoid page breaks inside dl and author address entries */
+  dd {
+    page-break-before: avoid;
+  }
+  .vcard {
+    page-break-inside: avoid;
+  }
+
+}
+
+/* Dark mode. */
+@media (prefers-color-scheme: dark) {
+:root {
+  --background-color: #121212;
+  --text-color: #f0f0f0;
+  --title-color: #fff;
+  --link-color: #4da4f0;
+  --highlight-color: #282828;
+  --line-color: #444;
+  --pilcrow-weak: #444;
+  --pilcrow-strong: #666;
+  scrollbar-color: #777 #333;
+}
+}
+
+/* SVG Trick: a prefix match works because only black and white are allowed */
+svg :is([stroke="black"], [stroke^="#000"]) {
+  stroke: var(--text-color);
+}
+svg :is([stroke="white"], [stroke^="#fff"]) {
+  stroke: var(--background-color);
+}
+svg :is([fill="black"], [fill^="#000"], :not([fill])) {
+  fill: var(--text-color);
+}
+svg :is([stroke="fill"], [fill^="#fff"]) {
+  fill: var(--background-color);
+}
+</style>
+
+</head>
+<body class="xml2rfc">
+<table class="ears">
+<thead><tr>
+<td class="left">Internet-Draft</td>
+<td class="center">FEC for QUIC</td>
+<td class="right">October 2022</td>
+</tr></thead>
+<tfoot><tr>
+<td class="left">Michel &amp; Bonaventure</td>
+<td class="center">Expires 23 April 2023</td>
+<td class="right">[Page]</td>
+</tr></tfoot>
+</table>
+<div id="external-metadata" class="document-information"></div>
+<div id="internal-metadata" class="document-information">
+<dl id="identifiers">
+<dt class="label-workgroup">Workgroup:</dt>
+<dd class="workgroup">QUIC</dd>
+<dt class="label-internet-draft">Internet-Draft:</dt>
+<dd class="internet-draft">draft-michel-quic-fec-latest</dd>
+<dt class="label-published">Published:</dt>
+<dd class="published">
+<time datetime="2022-10-20" class="published">20 October 2022</time>
+    </dd>
+<dt class="label-intended-status">Intended Status:</dt>
+<dd class="intended-status">Experimental</dd>
+<dt class="label-expires">Expires:</dt>
+<dd class="expires"><time datetime="2023-04-23">23 April 2023</time></dd>
+<dt class="label-authors">Authors:</dt>
+<dd class="authors">
+<div class="author">
+      <div class="author-name">F. Michel</div>
+<div class="org">UCLouvain</div>
+</div>
+<div class="author">
+      <div class="author-name">O. Bonaventure</div>
+<div class="org">UCLouvain</div>
+</div>
+</dd>
+</dl>
+</div>
+<h1 id="title">Forward Erasure Correction for QUIC loss recovery</h1>
+<section id="section-abstract">
+      <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
+<p id="section-abstract-1">This documents lays down the QUIC protocol design considerations
+needed for QUIC to apply Forward Erasure Correction on the data sent
+through the network.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+</section>
+<section class="note rfcEditorRemove" id="section-note.1">
+      <h2 id="name-about-this-document">
+<a href="#name-about-this-document" class="section-name selfRef">About This Document</a>
+      </h2>
+<p id="section-note.1-1">This note is to be removed before publishing as an RFC.<a href="#section-note.1-1" class="pilcrow">¶</a></p>
+<p id="section-note.1-2">
+        The latest revision of this draft can be found at <span><a href="https://francoismichel.github.io/i-d-quic-fec/draft-michel-quic-fec.html">https://francoismichel.github.io/i-d-quic-fec/draft-michel-quic-fec.html</a></span>.
+        Status information for this document may be found at <span><a href="https://datatracker.ietf.org/doc/draft-michel-quic-fec/">https://datatracker.ietf.org/doc/draft-michel-quic-fec/</a></span>.<a href="#section-note.1-2" class="pilcrow">¶</a></p>
+<p id="section-note.1-3">
+        Discussion of this document takes place on the
+        QUIC Working Group mailing list (<span><a href="mailto:quic@ietf.org">mailto:quic@ietf.org</a></span>),
+        which is archived at <span><a href="https://mailarchive.ietf.org/arch/browse/quic/">https://mailarchive.ietf.org/arch/browse/quic/</a></span>.
+        Subscribe at <span><a href="https://www.ietf.org/mailman/listinfo/quic/">https://www.ietf.org/mailman/listinfo/quic/</a></span>.<a href="#section-note.1-3" class="pilcrow">¶</a></p>
+<p id="section-note.1-4">Source for this draft and an issue tracker can be found at
+        <span><a href="https://github.com/francoismichel/i-d-quic-fec">https://github.com/francoismichel/i-d-quic-fec</a></span>.<a href="#section-note.1-4" class="pilcrow">¶</a></p>
+</section>
+<div id="status-of-memo">
+<section id="section-boilerplate.1">
+        <h2 id="name-status-of-this-memo">
+<a href="#name-status-of-this-memo" class="section-name selfRef">Status of This Memo</a>
+        </h2>
+<p id="section-boilerplate.1-1">
+        This Internet-Draft is submitted in full conformance with the
+        provisions of BCP 78 and BCP 79.<a href="#section-boilerplate.1-1" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-2">
+        Internet-Drafts are working documents of the Internet Engineering Task
+        Force (IETF). Note that other groups may also distribute working
+        documents as Internet-Drafts. The list of current Internet-Drafts is
+        at <span><a href="https://datatracker.ietf.org/drafts/current/">https://datatracker.ietf.org/drafts/current/</a></span>.<a href="#section-boilerplate.1-2" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-3">
+        Internet-Drafts are draft documents valid for a maximum of six months
+        and may be updated, replaced, or obsoleted by other documents at any
+        time. It is inappropriate to use Internet-Drafts as reference
+        material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-4">
+        This Internet-Draft will expire on 23 April 2023.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="copyright">
+<section id="section-boilerplate.2">
+        <h2 id="name-copyright-notice">
+<a href="#name-copyright-notice" class="section-name selfRef">Copyright Notice</a>
+        </h2>
+<p id="section-boilerplate.2-1">
+            Copyright (c) 2022 IETF Trust and the persons identified as the
+            document authors. All rights reserved.<a href="#section-boilerplate.2-1" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<span><a href="https://trustee.ietf.org/license-info">https://trustee.ietf.org/license-info</a></span>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Revised BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Revised BSD License.<a href="#section-boilerplate.2-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="toc">
+<section id="section-toc.1">
+        <a href="#" onclick="scroll(0,0)" class="toplink">▲</a><h2 id="name-table-of-contents">
+<a href="#name-table-of-contents" class="section-name selfRef">Table of Contents</a>
+        </h2>
+<nav class="toc"><ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1">
+            <p id="section-toc.1-1.1.1" class="keepWithNext"><a href="#section-1" class="auto internal xref">1</a>.  <a href="#name-introduction" class="internal xref">Introduction</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2">
+            <p id="section-toc.1-1.2.1" class="keepWithNext"><a href="#section-2" class="auto internal xref">2</a>.  <a href="#name-conventions-and-definitions" class="internal xref">Conventions and Definitions</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2.2.1">
+                <p id="section-toc.1-1.2.2.1.1" class="keepWithNext"><a href="#section-2.1" class="auto internal xref">2.1</a>.  <a href="#name-fec-related-definitions" class="internal xref">FEC-related definitions</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3">
+            <p id="section-toc.1-1.3.1"><a href="#section-3" class="auto internal xref">3</a>.  <a href="#name-the-network-channel-and-the" class="internal xref">The network channel and the coding channel</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4">
+            <p id="section-toc.1-1.4.1"><a href="#section-4" class="auto internal xref">4</a>.  <a href="#name-fec-and-the-loss-recovery-m" class="internal xref">FEC and the loss recovery mechanism</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5">
+            <p id="section-toc.1-1.5.1"><a href="#section-5" class="auto internal xref">5</a>.  <a href="#name-protocol-requirements-for-p" class="internal xref">Protocol requirements for protecting information through FEC</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.1">
+                <p id="section-toc.1-1.5.2.1.1"><a href="#section-5.1" class="auto internal xref">5.1</a>.  <a href="#name-defining-the-fec-protected-" class="internal xref">Defining the FEC-protected parts of a QUIC payload</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.2">
+                <p id="section-toc.1-1.5.2.2.1"><a href="#section-5.2" class="auto internal xref">5.2</a>.  <a href="#name-identifying-the-source-symb" class="internal xref">Identifying the source symbols from QUIC packets</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.2.2.1">
+                    <p id="section-toc.1-1.5.2.2.2.1.1"><a href="#section-5.2.1" class="auto internal xref">5.2.1</a>.  <a href="#name-alternative-1-sending-the-s" class="internal xref">Alternative 1: sending the source symbol inside a frame</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.2.2.2">
+                    <p id="section-toc.1-1.5.2.2.2.2.1"><a href="#section-5.2.2" class="auto internal xref">5.2.2</a>.  <a href="#name-alternative-2-only-sending-" class="internal xref">Alternative 2: only sending the SID inside a frame</a></p>
+</li>
+                </ul>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.3">
+                <p id="section-toc.1-1.5.2.3.1"><a href="#section-5.3" class="auto internal xref">5.3</a>.  <a href="#name-sending-the-repair-symbols" class="internal xref">Sending the repair symbols</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.4">
+                <p id="section-toc.1-1.5.2.4.1"><a href="#section-5.4" class="auto internal xref">5.4</a>.  <a href="#name-announcing-the-coding-windo" class="internal xref">Announcing the coding window size</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.5">
+                <p id="section-toc.1-1.5.2.5.1"><a href="#section-5.5" class="auto internal xref">5.5</a>.  <a href="#name-announcing-the-recovered-sy" class="internal xref">Announcing the recovered symbols</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6">
+            <p id="section-toc.1-1.6.1"><a href="#section-6" class="auto internal xref">6</a>.  <a href="#name-coding-channel-and-congesti" class="internal xref">Coding channel and congestion control</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7">
+            <p id="section-toc.1-1.7.1"><a href="#section-7" class="auto internal xref">7</a>.  <a href="#name-negociating-the-fec-extensi" class="internal xref">Negociating the FEC extension using transport parameters</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.1">
+                <p id="section-toc.1-1.7.2.1.1"><a href="#section-7.1" class="auto internal xref">7.1</a>.  <a href="#name-enable_fec" class="internal xref">enable_fec</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.2">
+                <p id="section-toc.1-1.7.2.2.1"><a href="#section-7.2" class="auto internal xref">7.2</a>.  <a href="#name-decoder_fec_scheme" class="internal xref">decoder_fec_scheme</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.3">
+                <p id="section-toc.1-1.7.2.3.1"><a href="#section-7.3" class="auto internal xref">7.3</a>.  <a href="#name-initial_coding_window" class="internal xref">initial_coding_window</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8">
+            <p id="section-toc.1-1.8.1"><a href="#section-8" class="auto internal xref">8</a>.  <a href="#name-security-considerations" class="internal xref">Security Considerations</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.1">
+                <p id="section-toc.1-1.8.2.1.1"><a href="#section-8.1" class="auto internal xref">8.1</a>.  <a href="#name-dos-due-to-difficult-symbol" class="internal xref">DoS due to difficult symbols recoveries</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9">
+            <p id="section-toc.1-1.9.1"><a href="#section-9" class="auto internal xref">9</a>.  <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.1">
+                <p id="section-toc.1-1.9.2.1.1"><a href="#section-9.1" class="auto internal xref">9.1</a>.  <a href="#name-new-transport-parameters" class="internal xref">New transport parameters</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.2">
+                <p id="section-toc.1-1.9.2.2.1"><a href="#section-9.2" class="auto internal xref">9.2</a>.  <a href="#name-new-frames" class="internal xref">New frames</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10">
+            <p id="section-toc.1-1.10.1"><a href="#section-10" class="auto internal xref"></a><a href="#name-acknowledgments" class="internal xref">Acknowledgments</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11">
+            <p id="section-toc.1-1.11.1"><a href="#section-11" class="auto internal xref"></a><a href="#name-references" class="internal xref">References</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.1">
+                <p id="section-toc.1-1.11.2.1.1"><a href="#section-11.1" class="auto internal xref"></a><a href="#name-normative-references" class="internal xref">Normative References</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.2">
+                <p id="section-toc.1-1.11.2.2.1"><a href="#section-11.2" class="auto internal xref"></a><a href="#name-informative-references" class="internal xref">Informative References</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12">
+            <p id="section-toc.1-1.12.1"><a href="#appendix-A" class="auto internal xref"></a><a href="#name-authors-addresses" class="internal xref">Authors' Addresses</a></p>
+</li>
+        </ul>
+</nav>
+</section>
+</div>
+<div id="introduction">
+<section id="section-1">
+      <h2 id="name-introduction">
+<a href="#section-1" class="section-number selfRef">1. </a><a href="#name-introduction" class="section-name selfRef">Introduction</a>
+      </h2>
+<p id="section-1-1">The QUIC protocol <span>[<a href="#QUICv1" class="cite xref">QUICv1</a>]</span> relies on retransmissions to ensure
+the reliable delivery of stream data. Retransmitting the lost
+information requires the loss recovery mechanism to identify lost
+packets which may take up to several hundreds of milliseconds
+<span>[<a href="#QUIC-RECOVERY" class="cite xref">QUIC-RECOVERY</a>]</span>. Depending on their delay-sensitivity, some
+applications using QUIC could not afford such a waiting time to
+ensure a good quality of experience to their users.<a href="#section-1-1" class="pilcrow">¶</a></p>
+<p id="section-1-2">Works has already been done to consider the use of
+Forward Erasure Correction (FEC) for the QUIC protocol to ensure timely
+data delivery for delay-sensitive applications <span>[<a href="#QUIC-FEC" class="cite xref">QUIC-FEC</a>]</span> <span>[<a href="#FlEC" class="cite xref">FlEC</a>]</span>
+        <span>[<a href="#rQUIC" class="cite xref">rQUIC</a>]</span> <span>[<a href="#I-D.swett-nwcrg-coding-for-quic" class="cite xref">I-D.swett-nwcrg-coding-for-quic</a>]</span>.
+This document defines additions to the QUIC protocol to extend its
+loss recovery mechanism and make it able to recover from packet
+losses prior to retransmission using FEC.<a href="#section-1-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="conventions-and-definitions">
+<section id="section-2">
+      <h2 id="name-conventions-and-definitions">
+<a href="#section-2" class="section-number selfRef">2. </a><a href="#name-conventions-and-definitions" class="section-name selfRef">Conventions and Definitions</a>
+      </h2>
+<p id="section-2-1">The key words "<span class="bcp14">MUST</span>", "<span class="bcp14">MUST NOT</span>", "<span class="bcp14">REQUIRED</span>", "<span class="bcp14">SHALL</span>", "<span class="bcp14">SHALL NOT</span>", "<span class="bcp14">SHOULD</span>", "<span class="bcp14">SHOULD NOT</span>", "<span class="bcp14">RECOMMENDED</span>", "<span class="bcp14">NOT RECOMMENDED</span>",
+"<span class="bcp14">MAY</span>", and "<span class="bcp14">OPTIONAL</span>" in this document are to be interpreted as
+described in BCP 14 <span>[<a href="#RFC2119" class="cite xref">RFC2119</a>]</span> <span>[<a href="#RFC8174" class="cite xref">RFC8174</a>]</span> when, and only when, they
+appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶</a></p>
+<div id="fec-related-definitions">
+<section id="section-2.1">
+        <h3 id="name-fec-related-definitions">
+<a href="#section-2.1" class="section-number selfRef">2.1. </a><a href="#name-fec-related-definitions" class="section-name selfRef">FEC-related definitions</a>
+        </h3>
+<p id="section-2.1-1">Source symbol: piece of information exchanged by two endpoints. This document considers QUIC packets payloads as source symbols.<a href="#section-2.1-1" class="pilcrow">¶</a></p>
+<p id="section-2.1-2">Repair symbol: redundant information constructed from the combination
+of several source symbols.<a href="#section-2.1-2" class="pilcrow">¶</a></p>
+<p id="section-2.1-3">Erasure: loss of one or more symbols<a href="#section-2.1-3" class="pilcrow">¶</a></p>
+<p id="section-2.1-4">Erasure correction code: algorithm generating repair symbols and
+reconstructing missing source symbols from a set of source and
+repair symbols.<a href="#section-2.1-4" class="pilcrow">¶</a></p>
+<p id="section-2.1-5">Forward Erasure Correction: process of recovering erased symbols
+before the detection of their erasure.<a href="#section-2.1-5" class="pilcrow">¶</a></p>
+<p id="section-2.1-6">FEC scheme: the conjunction of an erasure correction code and the
+specific protocol elements required to use it with the design
+described in this document.<a href="#section-2.1-6" class="pilcrow">¶</a></p>
+<p id="section-2.1-7">Encoder: entity producing repair symbols using an erasure correction code.
+The encoder can be a library used by the protocol implementation or a
+program running in a separate process or machine.<a href="#section-2.1-7" class="pilcrow">¶</a></p>
+<p id="section-2.1-8">Decoder: entity reconstructing missing source symbols using an erasure
+correction code. The decoder can be a library used by the protocol
+implementation or a program running in a separate process or machine.<a href="#section-2.1-8" class="pilcrow">¶</a></p>
+<p id="section-2.1-9">Coding window: window of source symbols that are required to decode a
+repair symbol.<a href="#section-2.1-9" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="the-network-channel-and-the-coding-channel">
+<section id="section-3">
+      <h2 id="name-the-network-channel-and-the">
+<a href="#section-3" class="section-number selfRef">3. </a><a href="#name-the-network-channel-and-the" class="section-name selfRef">The network channel and the coding channel</a>
+      </h2>
+<p id="section-3-1">QUIC endpoints exchange information over a network channel. Adding
+Forward Erasure Correction to QUIC enables an endpoint to receive information
+over a coding channel.  A coding channel can be seen as a communication
+channel between a QUIC receiver and a FEC decoder. The decoder often
+runs on the same machine as the QUIC receiver and can even be part of the
+protocol implementation itself. A source symbol is received through the coding
+channel when it is recovered by the FEC decoder instead of being explicitly
+received through the network. Only the data sent on the network channel is
+really transmitted on the wire between the two QUIC endpoints.
+<a href="#fig-network-and-coding-channels" class="auto internal xref">Figure 1</a> illustrates how symbols can be received
+from both channels.<a href="#section-3-1" class="pilcrow">¶</a></p>
+<span id="name-receiving-symbols-through-t"></span><div id="fig-network-and-coding-channels">
+<figure id="figure-1">
+        <div class="alignLeft art-text artwork" id="section-3-2.1">
+<pre>
+            Network Channel              Coding Channel
+
+Sender                       Receiver             Decoder    Application
+  |                              |                    |              |
+  |  PACKET(1)[SOURCE_SYMBOL(1)] |                    |              |
+  |-----------------------------&gt;|  SOURCE_SYMBOL(1)  |  APP_DATA(1) |
+  |                              |-------------------&gt;|-------------&gt;|
+  |  PACKET(2)[SOURCE_SYMBOL(2)] |                    |              |
+  |--------------x               |                    |              |
+  |                              |                    |              |
+  |  PACKET(3)[REPAIR_SYMBOL]    |                    |              |
+  |-----------------------------&gt;|    REPAIR_SYMBOL   |              |
+  |                              |-------------------&gt;|              |
+  |                              |                    |(recomputes)  |
+  |                              |                    |(the source)  |
+  |                              |                    |(symbol    )  |
+  |                              |                    |              |
+  |                              |                    |  APP_DATA(2) |
+  |                              |                    |-------------&gt;|
+  |                              |                    |              |
+  |                              |                    |              |
+</pre>
+</div>
+<figcaption><a href="#figure-1" class="selfRef">Figure 1</a>:
+<a href="#name-receiving-symbols-through-t" class="selfRef">Receiving symbols through the network channel</a>
+        </figcaption></figure>
+</div>
+<p id="section-3-3">In this illustration, the sender sends three QUIC packets through the
+network channel. Packets 1 and 2 carry one source symbol each
+and packet 3 carries one repair symbol protecting the
+two source symbols. The source symbols each carry application data
+(APP_DATA), e.g. through STREAM frames Packet 2 is lost due to network
+imperfection preventing SOURCE_SYMBOL(2) from being received through
+the network channel. The FEC decoder reconstructs SOURCE_SYMBOL(2) by
+combining SOURCE_SYMBOL(1) and REPAIR_SYMBOL. SOURCE_SYMBOL(2) is thus
+received through the coding channel. Note that SOURCE_SYMBOL(2) is not
+received as a packet since QUIC packets are only exchanged through the
+network channel. On the other hand, source symbols are carried by QUIC
+packets through the network channel and sent directly to the decoder
+through the coding channel..<a href="#section-3-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="fec-and-the-loss-recovery-mechanism">
+<section id="section-4">
+      <h2 id="name-fec-and-the-loss-recovery-m">
+<a href="#section-4" class="section-number selfRef">4. </a><a href="#name-fec-and-the-loss-recovery-m" class="section-name selfRef">FEC and the loss recovery mechanism</a>
+      </h2>
+<p id="section-4-1">The FEC mechanism described in this document is an enhancement of the
+classical QUIC loss recovery mechanism <span>[<a href="#QUIC-RECOVERY" class="cite xref">QUIC-RECOVERY</a>]</span>. It does
+not replace it by any means. A QUIC endpoint <span class="bcp14">MAY</span> ignore every received
+repair symbol and <span class="bcp14">MAY</span> not perform any symbol recovery at all. The FEC
+mechanism is only intended to allow a receiver recovering faster from
+packet losses on the network channel if it values the timeliness of
+data delivery.<a href="#section-4-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="protocol-requirements-for-protecting-information-through-fec">
+<section id="section-5">
+      <h2 id="name-protocol-requirements-for-p">
+<a href="#section-5" class="section-number selfRef">5. </a><a href="#name-protocol-requirements-for-p" class="section-name selfRef">Protocol requirements for protecting information through FEC</a>
+      </h2>
+<p id="section-5-1">In this section, we list the points that must be defined by the protocol
+for allowing QUIC endpoints to protect information using FEC.<a href="#section-5-1" class="pilcrow">¶</a></p>
+<div id="defining-the-fec-protected-parts-of-a-quic-payload">
+<section id="section-5.1">
+        <h3 id="name-defining-the-fec-protected-">
+<a href="#section-5.1" class="section-number selfRef">5.1. </a><a href="#name-defining-the-fec-protected-" class="section-name selfRef">Defining the FEC-protected parts of a QUIC payload</a>
+        </h3>
+<p id="section-5.1-1">There is no need to protect every piece information sent on the wire by
+QUIC. Some pieces of information are already sent redundantly (e.g. ACKs)
+and some data are not delay sensitive and can be retransmitted later with
+no harm (e.g. background download on a separate stream). Endpoints need
+to agree on which parts of the packets are part of the protected source
+symbols and how to compose a source symbol from what is sent on the wire.<a href="#section-5.1-1" class="pilcrow">¶</a></p>
+<p id="section-5.1-2">Versions 01 and 02 of <span>[<a href="#I-D.swett-nwcrg-coding-for-quic" class="cite xref">I-D.swett-nwcrg-coding-for-quic</a>]</span> only protect
+streams payload. The idea is simple when using a single stream but becomes
+complicated and requires more signaling in a multi-stream scenario. It also
+cannot protect DATAGRAM frames.
+In this document, we propose to consider whole frames as part of the source
+symbols. Source symbols are thus the counterpart to QUIC packets for the
+coding channel. Packets carry frames through the network channel and
+source symbols allow receiving frames from the coding channel.
+In order to reduce signalling between the peers, a single source symbol
+<span class="bcp14">MUST NOT</span> contain the frames of several QUIC packets at the same time.<a href="#section-5.1-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="identifying-the-source-symbols-from-quic-packets">
+<section id="section-5.2">
+        <h3 id="name-identifying-the-source-symb">
+<a href="#section-5.2" class="section-number selfRef">5.2. </a><a href="#name-identifying-the-source-symb" class="section-name selfRef">Identifying the source symbols from QUIC packets</a>
+        </h3>
+<p id="section-5.2-1">Upon reception of a QUIC packet, a receiver needs to identify the source
+symbols contained in the packet to forward to the FEC decoder.
+The decoder also needs to know which source symbols were lost. Since QUIC
+does not enforce sending contiguously increasing packet numbers, it is not
+possible for a receiver to distinguish a lost packet from a packet that
+has never been sent. Furthermore, a QUIC sender may not want to protect
+the payload of some packets if they do not carry latency-sensitive
+information. Source symbols are thus attributed a Symbol ID (SID). The
+SID of the first source symbol <span class="bcp14">MUST</span> be zero and the SIDs are contiguously
+increasing. When a FEC decoder notes gaps in the received SIDs,
+the missing SIDs correspond to lost source symbols that can be
+recovered using FEC.<a href="#section-5.2-1" class="pilcrow">¶</a></p>
+<p id="section-5.2-2">As the QUIC packet number cannot be used to carry the SID, it must
+be transmitted using either a dedicated QUIC frame or a dedicated
+header field. The second solution being incompatible with <span>[<a href="#QUICv1" class="cite xref">QUICv1</a>]</span>,
+it is not discussed in this document. The source
+symbol payload can either be put inside a dedicated frame
+(<a href="#sec-source-symbol-frame" class="auto internal xref">Section 5.2.1</a>) or infered when handling a specific frame
+(<a href="#sec-sid-frame" class="auto internal xref">Section 5.2.2</a>). Both alternatives lead to the exact same packet
+wire format and outcome.<a href="#section-5.2-2" class="pilcrow">¶</a></p>
+<div id="sec-source-symbol-frame">
+<section id="section-5.2.1">
+          <h4 id="name-alternative-1-sending-the-s">
+<a href="#section-5.2.1" class="section-number selfRef">5.2.1. </a><a href="#name-alternative-1-sending-the-s" class="section-name selfRef">Alternative 1: sending the source symbol inside a frame</a>
+          </h4>
+<p id="section-5.2.1-1">This alternative is compatible with <span>[<a href="#QUICv1" class="cite xref">QUICv1</a>]</span>. It defines a new
+SOURCE_SYMBOL frame as shown in <a href="#fig-source-symbol" class="auto internal xref">Figure 2</a>.<a href="#section-5.2.1-1" class="pilcrow">¶</a></p>
+<span id="name-source_symbol-frame-format"></span><div id="fig-source-symbol">
+<figure id="figure-2">
+            <div class="alignLeft art-text artwork" id="section-5.2.1-2.1">
+<pre>
+SOURCE_SYMBOL {
+  SID (i),
+  FEC Protected Payload (..)
+}
+</pre>
+</div>
+<figcaption><a href="#figure-2" class="selfRef">Figure 2</a>:
+<a href="#name-source_symbol-frame-format" class="selfRef">SOURCE_SYMBOL frame format</a>
+            </figcaption></figure>
+</div>
+<p id="section-5.2.1-3">The frame explicitly represents a source symbol. The FEC Protected Payload
+field is analogous to the payload of a QUIC packet: it contains a
+sequence of frames that are protected by FEC. The SOURCE_SYMBOL frame
+is idempotent and explicit: it exactly describes the frames inside the
+source symbol. The main drawback is that existing QUIC implementations
+are not used to write frames inside other frames which may increase
+the implementation cost of the approach. An example of the use of the
+SOURCE_SYMBOL frame is shown in <a href="#fig-source-symbol-frame-example" class="auto internal xref">Figure 3</a>.<a href="#section-5.2.1-3" class="pilcrow">¶</a></p>
+<span id="name-sid-alternative-1"></span><div id="fig-source-symbol-frame-example">
+<figure id="figure-3">
+            <div class="alignLeft art-text artwork" id="section-5.2.1-4.1">
+<pre>
+Sender                                                       Receiver
+  |                                                             |
+  | Pkt(5)[ACK[..], SOURCE_SYMBOL(0, { STREAM(4, "abc") }]      |
+  |------------------------------------------------------------&gt;|
+  |                                                             |
+  | Pkt(6)[STREAM(2, "xyz"),                                    |
+  |        SOURCE_SYMBOL(1, { STREAM(8, "def"),                 |
+  |                           DATAGRAM("msg") }]                |
+  |------------------------------------------------------------&gt;|
+  |                                                             |
+  |                                            Pkt(1)[ACK[..]]  |
+  |&lt;------------------------------------------------------------|
+  |                                                             |
+
+</pre>
+</div>
+<figcaption><a href="#figure-3" class="selfRef">Figure 3</a>:
+<a href="#name-sid-alternative-1" class="selfRef">SID Alternative 1</a>
+            </figcaption></figure>
+</div>
+<p id="section-5.2.1-5">The two SOURCE_SYMBOL frames contain the source symbols with
+SID 0 and 1. The first source symbol contains a frame for stream 4 while
+the second one contains a frame for stream 8 and a DATAGRAM frame. The ACK
+frame of packet 5 and the STREAM frame for stream 2 of packet 6 are not part
+of the source symbol and are thus not protected by FEC. In this scenario,
+every source symbol is correctly received and their reception can be deduced
+from the acknowledgements of packets 5 and 6.<a href="#section-5.2.1-5" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="sec-sid-frame">
+<section id="section-5.2.2">
+          <h4 id="name-alternative-2-only-sending-">
+<a href="#section-5.2.2" class="section-number selfRef">5.2.2. </a><a href="#name-alternative-2-only-sending-" class="section-name selfRef">Alternative 2: only sending the SID inside a frame</a>
+          </h4>
+<p id="section-5.2.2-1">This alternative is compatible with <span>[<a href="#QUICv1" class="cite xref">QUICv1</a>]</span>. It defines a new SID frame
+as shown in <a href="#fig-sid-frame" class="auto internal xref">Figure 4</a>.<a href="#section-5.2.2-1" class="pilcrow">¶</a></p>
+<span id="name-sid-frame-format"></span><div id="fig-sid-frame">
+<figure id="figure-4">
+            <div class="alignLeft art-text artwork" id="section-5.2.2-2.1">
+<pre>
+SID {
+  SID (i),
+}
+</pre>
+</div>
+<figcaption><a href="#figure-4" class="selfRef">Figure 4</a>:
+<a href="#name-sid-frame-format" class="selfRef">SID frame format</a>
+            </figcaption></figure>
+</div>
+<p id="section-5.2.2-3">A QUIC packet carrying an SID frame means that the frames following the SID
+frames in the packet payload are part of a FEC source symbol. The SID of
+this symbol is represented by the only field of the SID frame. A packet
+<span class="bcp14">MUST NOT</span> contain more than one SID frame. A packet whose payload is
+FEC-protected <span class="bcp14">MUST</span> contain a SID frame whose SID field is the SID of
+the related source symbol. This alternative has one drawback: the SID frame
+is not idempotent since it is related to its containing packet.
+An example of the use of the SID frame is shown in <a href="#fig-sid-frame-example" class="auto internal xref">Figure 5</a>.<a href="#section-5.2.2-3" class="pilcrow">¶</a></p>
+<span id="name-sid-alternative-2"></span><div id="fig-sid-frame-example">
+<figure id="figure-5">
+            <div class="alignLeft art-text artwork" id="section-5.2.2-4.1">
+<pre>
+Sender                                       Receiver
+  |                                            |
+  | Pkt(5)[ACK[..], SID(0), STREAM(4, "abc")]  |
+  |-------------------------------------------&gt;|
+  |                                            |
+  | Pkt(6)[STREAM(2, "xyz"),                   |
+  |        SID(1), STREAM(8, "def"),           |
+  |        DATAGRAM("msg")]                    |
+  |-------------------------------------------&gt;|
+  |                                            |
+  |                            Pkt(1)[ACK[..]] |
+  |&lt;-------------------------------------------|
+  |                                            |
+
+</pre>
+</div>
+<figcaption><a href="#figure-5" class="selfRef">Figure 5</a>:
+<a href="#name-sid-alternative-2" class="selfRef">SID Alternative 2</a>
+            </figcaption></figure>
+</div>
+<p id="section-5.2.2-5">The source symbols carried by the packets in this example are the same as for
+<a href="#fig-source-symbol-frame-example" class="auto internal xref">Figure 3</a> and the outcome and wire
+format are the same.<a href="#section-5.2.2-5" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="sec-repair-frame">
+<section id="section-5.3">
+        <h3 id="name-sending-the-repair-symbols">
+<a href="#section-5.3" class="section-number selfRef">5.3. </a><a href="#name-sending-the-repair-symbols" class="section-name selfRef">Sending the repair symbols</a>
+        </h3>
+<p id="section-5.3-1">The repair symbols and the metadata attached to them are transferred using
+the REPAIR frame shown in <a href="#fig-fec-repair-frame" class="auto internal xref">Figure 6</a>.<a href="#section-5.3-1" class="pilcrow">¶</a></p>
+<span id="name-repair-frame-format"></span><div id="fig-fec-repair-frame">
+<figure id="figure-6">
+          <div class="alignLeft art-text artwork" id="section-5.3-2.1">
+<pre>
+REPAIR {
+  FEC Scheme Specific Repair Payload (1..),
+}
+</pre>
+</div>
+<figcaption><a href="#figure-6" class="selfRef">Figure 6</a>:
+<a href="#name-repair-frame-format" class="selfRef">REPAIR frame format</a>
+          </figcaption></figure>
+</div>
+<p id="section-5.3-3">The payload of the REPAIR frame is specific to the underlying
+FEC scheme. In addition to the repair symbol itself, it may
+contain any metadata needed by the erasure-correcting code (e.g. identifying
+the source symbols protected by the repair symbol carried by the frame).
+Depending on the FEC scheme, the REPAIR frame <span class="bcp14">MAY</span> contain
+only a part of a repair symbol.<a href="#section-5.3-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="sec-fec-window-frame">
+<section id="section-5.4">
+        <h3 id="name-announcing-the-coding-windo">
+<a href="#section-5.4" class="section-number selfRef">5.4. </a><a href="#name-announcing-the-coding-windo" class="section-name selfRef">Announcing the coding window size</a>
+        </h3>
+<p id="section-5.4-1">The receiver needs to store the received symbols in order to recover the
+lost source symbols. The FEC_WINDOW frame is sent by the receiver
+to announce the number of symbols  that can be stored simultaneously by
+the receiver at a given point of time. The format of the FEC_WINDOW frame
+is described in <a href="#fig-fec-window-frame" class="auto internal xref">Figure 7</a>.<a href="#section-5.4-1" class="pilcrow">¶</a></p>
+<span id="name-fec_window-frame-format"></span><div id="fig-fec-window-frame">
+<figure id="figure-7">
+          <div class="alignLeft art-text artwork" id="section-5.4-2.1">
+<pre>
+FEC_WINDOW {
+  FEC Window Epoch (i),
+  FEC Window Size (i),
+}
+</pre>
+</div>
+<figcaption><a href="#figure-7" class="selfRef">Figure 7</a>:
+<a href="#name-fec_window-frame-format" class="selfRef">FEC_WINDOW frame format</a>
+          </figcaption></figure>
+</div>
+<p id="section-5.4-3">The FEC Window Epoch field is a unique identifier for the announced window.
+The first epoch is set to 0. Each time a new FEC_WINDOW frame is sent,
+the FEC Window Epoch field is increased by exactly one.<a href="#section-5.4-3" class="pilcrow">¶</a></p>
+<p id="section-5.4-4">The Window Size field indicates the number of symbols that can be stored
+simultaneously by the receiver. The Window Size value overrides the
+window sizes received for smaller window epochs.<a href="#section-5.4-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="sec-symbol-ack-frame">
+<section id="section-5.5">
+        <h3 id="name-announcing-the-recovered-sy">
+<a href="#section-5.5" class="section-number selfRef">5.5. </a><a href="#name-announcing-the-recovered-sy" class="section-name selfRef">Announcing the recovered symbols</a>
+        </h3>
+<p id="section-5.5-1">The FEC receiver <span class="bcp14">MAY</span> advertise the source symbols that have been received
+either through the network or coding channels to avoid the sender
+retransmitting the data of the recovered source symbols. This can be
+done using the SYMBOL_ACK frame as shown in <a href="#fig-symbol-ack-frame" class="auto internal xref">Figure 8</a>.<a href="#section-5.5-1" class="pilcrow">¶</a></p>
+<span id="name-symbol_ack-frame-format"></span><div id="fig-symbol-ack-frame">
+<figure id="figure-8">
+          <div class="alignLeft art-text artwork" id="section-5.5-2.1">
+<pre>
+SYMBOL_ACK {
+  Largest Acknowledged (i),
+  ACK Range Count (i),
+  First ACK Range (i),
+  ACK Range (..) ...,
+}
+</pre>
+</div>
+<figcaption><a href="#figure-8" class="selfRef">Figure 8</a>:
+<a href="#name-symbol_ack-frame-format" class="selfRef">SYMBOL_ACK frame format</a>
+          </figcaption></figure>
+</div>
+<p id="section-5.5-3">The frame has a similar format as the ACK frame, announcing the reception
+of SIDs instead of packet numbers. In addition to symbols
+recovered by FEC, this frame <span class="bcp14">MAY</span> also announce symbols received regularly
+through the network to avoid gaps in the ACK ranges and reduce the frame
+size. There is no obligation for a FEC receiver to send SYMBOL_ACK frames.
+The FEC receiver <span class="bcp14">MAY</span> decide to only advertize a subset of the received
+source symbols. The SYMBOL_ACK frame <span class="bcp14">MUST NOT</span> be used to infer any congestion
+state on the network (see <a href="#sec-coding-and-congestion" class="auto internal xref">Section 6</a>).<a href="#section-5.5-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="sec-coding-and-congestion">
+<section id="section-6">
+      <h2 id="name-coding-channel-and-congesti">
+<a href="#section-6" class="section-number selfRef">6. </a><a href="#name-coding-channel-and-congesti" class="section-name selfRef">Coding channel and congestion control</a>
+      </h2>
+<p id="section-6-1">The coding and network channels being unrelated, receiving symbols
+through the coding channel <span class="bcp14">MUST NOT</span> be used to infer any congestion state on
+the network channel. More specifically, receiving a symbol through the coding
+channel <span class="bcp14">MUST NOT</span> be used to hide the network loss event of the corresponding
+packet to the congestion control, applying Recommandation 1 of <span>[<a href="#RFC9265" class="cite xref">RFC9265</a>]</span>.<a href="#section-6-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="negociating-the-fec-extension-using-transport-parameters">
+<section id="section-7">
+      <h2 id="name-negociating-the-fec-extensi">
+<a href="#section-7" class="section-number selfRef">7. </a><a href="#name-negociating-the-fec-extensi" class="section-name selfRef">Negociating the FEC extension using transport parameters</a>
+      </h2>
+<p id="section-7-1">This section defines the new transport parameters used to negociate and
+parametrize the FEC extension described in this document.<a href="#section-7-1" class="pilcrow">¶</a></p>
+<div id="sec-enable-fec-tp">
+<section id="section-7.1">
+        <h3 id="name-enable_fec">
+<a href="#section-7.1" class="section-number selfRef">7.1. </a><a href="#name-enable_fec" class="section-name selfRef">enable_fec</a>
+        </h3>
+<p id="section-7.1-1">The use of the FEC extension is negociated using the enable_fec transport
+parameter defined in <a href="#enable-fec-transport-parameter" class="auto internal xref">Table 1</a> :<a href="#section-7.1-1" class="pilcrow">¶</a></p>
+<span id="name-values-for-enable_fec"></span><div id="enable-fec-transport-parameter">
+<table class="center" id="table-1">
+          <caption>
+<a href="#table-1" class="selfRef">Table 1</a>:
+<a href="#name-values-for-enable_fec" class="selfRef">Values for enable_fec</a>
+          </caption>
+<thead>
+            <tr>
+              <th class="text-left" rowspan="1" colspan="1">Option</th>
+              <th class="text-left" rowspan="1" colspan="1">Definition</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">0x0</td>
+              <td class="text-left" rowspan="1" colspan="1">don't support FEC</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">0x1</td>
+              <td class="text-left" rowspan="1" colspan="1">supports FEC as defined in this document</td>
+            </tr>
+          </tbody>
+        </table>
+</div>
+<p id="section-7.1-3">When the enable_fec value is 0 or is not advertized by the peer,
+the QUIC endpoint <span class="bcp14">MUST NOT</span> use any frame or mechanism described in this
+document.<a href="#section-7.1-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="sec-decoder-fec-scheme-tp">
+<section id="section-7.2">
+        <h3 id="name-decoder_fec_scheme">
+<a href="#section-7.2" class="section-number selfRef">7.2. </a><a href="#name-decoder_fec_scheme" class="section-name selfRef">decoder_fec_scheme</a>
+        </h3>
+<p id="section-7.2-1">Each QUIC endpoint uses the decoder_fec_scheme transport parameter to
+define the FEC scheme used to decode the received repair symbols. The
+QUIC sender <span class="bcp14">MUST</span> use the specified FEC scheme to generate repair symbols.
+The decoder_fec_scheme parameter is an integer value representing the
+identifier of the desired FEC scheme.
+For instance, a FEC scheme using Reed Solomon could be identified by the
+ID 0x0 and a FEC scheme using LDPC could be identified by 0x1.<a href="#section-7.2-1" class="pilcrow">¶</a></p>
+<p id="section-7.2-2">This document does not specify nor identify any FEC scheme yet.
+Several FEC schemes have been proposed
+<span>[<a href="#I-D.roca-nwcrg-rlc-fec-scheme-for-quic" class="cite xref">I-D.roca-nwcrg-rlc-fec-scheme-for-quic</a>]</span> <span>[<a href="#RFC6865" class="cite xref">RFC6865</a>]</span>
+          <span>[<a href="#I-D.irtf-nwcrg-tetrys" class="cite xref">I-D.irtf-nwcrg-tetrys</a>]</span>. The next version of this
+document will detail how some of these schemes can be directly integrated
+in QUIC.<a href="#section-7.2-2" class="pilcrow">¶</a></p>
+<p id="section-7.2-3">Future
+versions of this document will provide ways to format FEC scheme-specific
+payload for REPAIR frames.
+When the decoder_fec_scheme parameter is not advertized by the peer,
+the QUIC sender <span class="bcp14">MUST NOT</span> send any repair symbol.<a href="#section-7.2-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="sec-initial-coding-window-tp">
+<section id="section-7.3">
+        <h3 id="name-initial_coding_window">
+<a href="#section-7.3" class="section-number selfRef">7.3. </a><a href="#name-initial_coding_window" class="section-name selfRef">initial_coding_window</a>
+        </h3>
+<p id="section-7.3-1">Each QUIC endpoint uses the initial_coding_window transport parameter to
+define the initial coding window size it uses to store source and repair
+symbols (see <a href="#sec-fec-window-frame" class="auto internal xref">Section 5.4</a>).
+When the initial_coding_window parameter is not advertized by the peer,
+the QUIC sender <span class="bcp14">MUST</span> consider a default value of 0 and <span class="bcp14">MUST NOT</span> send
+any repair symbol.<a href="#section-7.3-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="security-considerations">
+<section id="section-8">
+      <h2 id="name-security-considerations">
+<a href="#section-8" class="section-number selfRef">8. </a><a href="#name-security-considerations" class="section-name selfRef">Security Considerations</a>
+      </h2>
+<p id="section-8-1">The FEC mechanism for QUIC only runs under 0-RTT and 1-RTT encryption levels and
+only operates inside the encrypted payload.<a href="#section-8-1" class="pilcrow">¶</a></p>
+<div id="dos-due-to-difficult-symbols-recoveries">
+<section id="section-8.1">
+        <h3 id="name-dos-due-to-difficult-symbol">
+<a href="#section-8.1" class="section-number selfRef">8.1. </a><a href="#name-dos-due-to-difficult-symbol" class="section-name selfRef">DoS due to difficult symbols recoveries</a>
+        </h3>
+<p id="section-8.1-1">An attacker could try to cause a DoS of a receiver by selectively sending source
+and repair symbols to trigger intensive erasure correction operations on the
+receiver. A QUIC receiver is never forced to perform any erasure correction
+and may ignore any received repair symbol if it has doubts in its capabilities
+to decode it in a reasonable amount of time.<a href="#section-8.1-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="iana-considerations">
+<section id="section-9">
+      <h2 id="name-iana-considerations">
+<a href="#section-9" class="section-number selfRef">9. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
+      </h2>
+<p id="section-9-1"><em>Disclaimer: the IDs defined in this section are present for experimental</em>
+        <em>purposes only. They are not requested codepoints and are subject to change</em>
+        <em>in the next versions of this document.</em><a href="#section-9-1" class="pilcrow">¶</a></p>
+<p id="section-9-2">This document defines three new transport parameters and five new frames. The
+SID and SOURCE_SYMBOL frames serve the same purpose. One of them will be
+removed in next versions of this document. The values present in the tables
+are used for experiments.<a href="#section-9-2" class="pilcrow">¶</a></p>
+<div id="new-transport-parameters">
+<section id="section-9.1">
+        <h3 id="name-new-transport-parameters">
+<a href="#section-9.1" class="section-number selfRef">9.1. </a><a href="#name-new-transport-parameters" class="section-name selfRef">New transport parameters</a>
+        </h3>
+<span id="name-new-transport-parameters-2"></span><div id="iana-transport-parameters">
+<table class="center" id="table-2">
+          <caption>
+<a href="#table-2" class="selfRef">Table 2</a>:
+<a href="#name-new-transport-parameters-2" class="selfRef">New transport parameters</a>
+          </caption>
+<thead>
+            <tr>
+              <th class="text-left" rowspan="1" colspan="1">Parameter ID</th>
+              <th class="text-left" rowspan="1" colspan="1">Parameter name</th>
+              <th class="text-left" rowspan="1" colspan="1">Specification</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">0x238ffeceXX</td>
+              <td class="text-left" rowspan="1" colspan="1">enable_fec</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <a href="#sec-enable-fec-tp" class="auto internal xref">Section 7.1</a>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">0x238ffecd</td>
+              <td class="text-left" rowspan="1" colspan="1">decoder_fec_scheme</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <a href="#sec-decoder-fec-scheme-tp" class="auto internal xref">Section 7.2</a>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">0x238ffecc</td>
+              <td class="text-left" rowspan="1" colspan="1">initial_coding_window</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <a href="#sec-initial-coding-window-tp" class="auto internal xref">Section 7.3</a>
+</td>
+            </tr>
+          </tbody>
+        </table>
+</div>
+<p id="section-9.1-2">The XX in 0x238ffeceXX are to be replaced by the version of this document
+that is implemented by the QUIC endpoint (e.g. the parameter ID for the
+version 00 of this document is 0x238ffece00).<a href="#section-9.1-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="new-frames">
+<section id="section-9.2">
+        <h3 id="name-new-frames">
+<a href="#section-9.2" class="section-number selfRef">9.2. </a><a href="#name-new-frames" class="section-name selfRef">New frames</a>
+        </h3>
+<span id="name-new-frames-2"></span><div id="iana-frames">
+<table class="center" id="table-3">
+          <caption>
+<a href="#table-3" class="selfRef">Table 3</a>:
+<a href="#name-new-frames-2" class="selfRef">New frames</a>
+          </caption>
+<thead>
+            <tr>
+              <th class="text-left" rowspan="1" colspan="1">Frame ID</th>
+              <th class="text-left" rowspan="1" colspan="1">Frame name</th>
+              <th class="text-left" rowspan="1" colspan="1">Specification</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">0x32a80fec</td>
+              <td class="text-left" rowspan="1" colspan="1">REPAIR</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <a href="#sec-repair-frame" class="auto internal xref">Section 5.3</a>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">0x32a80fec55</td>
+              <td class="text-left" rowspan="1" colspan="1">SOURCE_SYMBOL</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <a href="#sec-source-symbol-frame" class="auto internal xref">Section 5.2.1</a>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">0x32a80fec1d</td>
+              <td class="text-left" rowspan="1" colspan="1">SID</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <a href="#sec-sid-frame" class="auto internal xref">Section 5.2.2</a>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">0x32a80fecac</td>
+              <td class="text-left" rowspan="1" colspan="1">SYMBOL_ACK</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <a href="#sec-symbol-ack-frame" class="auto internal xref">Section 5.5</a>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">0x32a80fecc0</td>
+              <td class="text-left" rowspan="1" colspan="1">FEC_WINDOW</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <a href="#sec-fec-window-frame" class="auto internal xref">Section 5.4</a>
+</td>
+            </tr>
+          </tbody>
+        </table>
+</div>
+</section>
+</div>
+</section>
+</div>
+<div id="acknowledgments">
+<section id="section-10">
+      <h2 id="name-acknowledgments">
+<a href="#name-acknowledgments" class="section-name selfRef">Acknowledgments</a>
+      </h2>
+<p id="section-10-1">Maxime Piraux, Olivier Bonaventure and all the authors of
+<span>[<a href="#I-D.swett-nwcrg-coding-for-quic" class="cite xref">I-D.swett-nwcrg-coding-for-quic</a>]</span>.<a href="#section-10-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<section id="section-11">
+      <h2 id="name-references">
+<a href="#name-references" class="section-name selfRef">References</a>
+      </h2>
+<section id="section-11.1">
+        <h3 id="name-normative-references">
+<a href="#name-normative-references" class="section-name selfRef">Normative References</a>
+        </h3>
+<dl class="references">
+<dt id="QUIC-RECOVERY">[QUIC-RECOVERY]</dt>
+        <dd>
+<span class="refAuthor">Iyengar, J., Ed.</span> and <span class="refAuthor">I. Swett, Ed.</span>, <span class="refTitle">"QUIC Loss Detection and Congestion Control"</span>, <span class="seriesInfo">RFC 9002</span>, <span class="seriesInfo">DOI 10.17487/RFC9002</span>, <time datetime="2021-05" class="refDate">May 2021</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9002">https://www.rfc-editor.org/rfc/rfc9002</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="QUICv1">[QUICv1]</dt>
+        <dd>
+<span class="refAuthor">Iyengar, J., Ed.</span> and <span class="refAuthor">M. Thomson, Ed.</span>, <span class="refTitle">"QUIC: A UDP-Based Multiplexed and Secure Transport"</span>, <span class="seriesInfo">RFC 9000</span>, <span class="seriesInfo">DOI 10.17487/RFC9000</span>, <time datetime="2021-05" class="refDate">May 2021</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9000">https://www.rfc-editor.org/rfc/rfc9000</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC2119">[RFC2119]</dt>
+        <dd>
+<span class="refAuthor">Bradner, S.</span>, <span class="refTitle">"Key words for use in RFCs to Indicate Requirement Levels"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 2119</span>, <span class="seriesInfo">DOI 10.17487/RFC2119</span>, <time datetime="1997-03" class="refDate">March 1997</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc2119">https://www.rfc-editor.org/rfc/rfc2119</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8174">[RFC8174]</dt>
+        <dd>
+<span class="refAuthor">Leiba, B.</span>, <span class="refTitle">"Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 8174</span>, <span class="seriesInfo">DOI 10.17487/RFC8174</span>, <time datetime="2017-05" class="refDate">May 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8174">https://www.rfc-editor.org/rfc/rfc8174</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC9265">[RFC9265]</dt>
+      <dd>
+<span class="refAuthor">Kuhn, N.</span>, <span class="refAuthor">Lochin, E.</span>, <span class="refAuthor">Michel, F.</span>, and <span class="refAuthor">M. Welzl</span>, <span class="refTitle">"Forward Erasure Correction (FEC) Coding and Congestion Control in Transport"</span>, <span class="seriesInfo">RFC 9265</span>, <span class="seriesInfo">DOI 10.17487/RFC9265</span>, <time datetime="2022-07" class="refDate">July 2022</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9265">https://www.rfc-editor.org/rfc/rfc9265</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+</dl>
+</section>
+<section id="section-11.2">
+        <h3 id="name-informative-references">
+<a href="#name-informative-references" class="section-name selfRef">Informative References</a>
+        </h3>
+<dl class="references">
+<dt id="FlEC">[FlEC]</dt>
+        <dd>
+<span class="refAuthor">Michel, F.</span>, <span class="refAuthor">Cohen, A.</span>, <span class="refAuthor">Malak, D.</span>, <span class="refAuthor">Coninck, Q.</span>, <span class="refAuthor">Medard, M.</span>, and <span class="refAuthor">O. Bonaventure</span>, <span class="refTitle">"FlEC: Enhancing QUIC With Application-Tailored Reliability Mechanisms"</span>, <span class="seriesInfo">IEEE/ACM Transactions on Networking pp. 1-14</span>, <span class="seriesInfo">DOI 10.1109/tnet.2022.3195611</span>, <time datetime="2022" class="refDate">2022</time>, <span>&lt;<a href="https://doi.org/10.1109/tnet.2022.3195611">https://doi.org/10.1109/tnet.2022.3195611</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="I-D.irtf-nwcrg-tetrys">[I-D.irtf-nwcrg-tetrys]</dt>
+        <dd>
+<span class="refAuthor">Detchart, J.</span>, <span class="refAuthor">Lochin, E.</span>, <span class="refAuthor">Lacan, J.</span>, and <span class="refAuthor">V. Roca</span>, <span class="refTitle">"Tetrys, an On-the-Fly Network Coding Protocol"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-irtf-nwcrg-tetrys-03</span>, <time datetime="2022-09-06" class="refDate">6 September 2022</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-irtf-nwcrg-tetrys-03">https://datatracker.ietf.org/doc/html/draft-irtf-nwcrg-tetrys-03</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="I-D.roca-nwcrg-rlc-fec-scheme-for-quic">[I-D.roca-nwcrg-rlc-fec-scheme-for-quic]</dt>
+        <dd>
+<span class="refAuthor">Roca, V.</span>, <span class="refAuthor">Michel, F.</span>, <span class="refAuthor">Swett, I.</span>, and <span class="refAuthor">M. Montpetit</span>, <span class="refTitle">"Sliding Window Random Linear Code (RLC) Forward Erasure Correction (FEC) Schemes for QUIC"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-roca-nwcrg-rlc-fec-scheme-for-quic-03</span>, <time datetime="2020-03-09" class="refDate">9 March 2020</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-roca-nwcrg-rlc-fec-scheme-for-quic-03">https://datatracker.ietf.org/doc/html/draft-roca-nwcrg-rlc-fec-scheme-for-quic-03</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="I-D.swett-nwcrg-coding-for-quic">[I-D.swett-nwcrg-coding-for-quic]</dt>
+        <dd>
+<span class="refAuthor">Swett, I.</span>, <span class="refAuthor">Montpetit, M.</span>, <span class="refAuthor">Roca, V.</span>, and <span class="refAuthor">F. Michel</span>, <span class="refTitle">"Coding for QUIC"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-swett-nwcrg-coding-for-quic-04</span>, <time datetime="2020-03-09" class="refDate">9 March 2020</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-swett-nwcrg-coding-for-quic-04">https://datatracker.ietf.org/doc/html/draft-swett-nwcrg-coding-for-quic-04</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="QUIC-FEC">[QUIC-FEC]</dt>
+        <dd>
+<span class="refAuthor">Michel, F.</span>, <span class="refAuthor">De Coninck, Q.</span>, and <span class="refAuthor">O. Bonaventure</span>, <span class="refTitle">"QUIC-FEC: Bringing the benefits of Forward Erasure Correction to QUIC"</span>, <span class="seriesInfo">2019 IFIP Networking Conference (IFIP Networking)</span>, <span class="seriesInfo">DOI 10.23919/ifipnetworking.2019.8816838</span>, <time datetime="2019-05" class="refDate">May 2019</time>, <span>&lt;<a href="https://doi.org/10.23919/ifipnetworking.2019.8816838">https://doi.org/10.23919/ifipnetworking.2019.8816838</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC6865">[RFC6865]</dt>
+        <dd>
+<span class="refAuthor">Roca, V.</span>, <span class="refAuthor">Cunche, M.</span>, <span class="refAuthor">Lacan, J.</span>, <span class="refAuthor">Bouabdallah, A.</span>, and <span class="refAuthor">K. Matsuzono</span>, <span class="refTitle">"Simple Reed-Solomon Forward Error Correction (FEC) Scheme for FECFRAME"</span>, <span class="seriesInfo">RFC 6865</span>, <span class="seriesInfo">DOI 10.17487/RFC6865</span>, <time datetime="2013-02" class="refDate">February 2013</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc6865">https://www.rfc-editor.org/rfc/rfc6865</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="rQUIC">[rQUIC]</dt>
+      <dd>
+<span class="refAuthor">Garrido, P.</span>, <span class="refAuthor">Sanchez, I.</span>, <span class="refAuthor">Ferlin, S.</span>, <span class="refAuthor">Aguero, R.</span>, and <span class="refAuthor">O. Alay</span>, <span class="refTitle">"rQUIC: Integrating FEC with QUIC for Robust Wireless Communications"</span>, <span class="seriesInfo">2019 IEEE Global Communications Conference (GLOBECOM)</span>, <span class="seriesInfo">DOI 10.1109/globecom38437.2019.9013401</span>, <time datetime="2019-12" class="refDate">December 2019</time>, <span>&lt;<a href="https://doi.org/10.1109/globecom38437.2019.9013401">https://doi.org/10.1109/globecom38437.2019.9013401</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+</dl>
+</section>
+</section>
+<div id="authors-addresses">
+<section id="appendix-A">
+      <h2 id="name-authors-addresses">
+<a href="#name-authors-addresses" class="section-name selfRef">Authors' Addresses</a>
+      </h2>
+<address class="vcard">
+        <div dir="auto" class="left"><span class="fn nameRole">François Michel</span></div>
+<div dir="auto" class="left"><span class="org">UCLouvain</span></div>
+<div class="email">
+<span>Email:</span>
+<a href="mailto:francois.michel@uclouvain.be" class="email">francois.michel@uclouvain.be</a>
+</div>
+</address>
+<address class="vcard">
+        <div dir="auto" class="left"><span class="fn nameRole">Olivier Bonaventure</span></div>
+<div dir="auto" class="left"><span class="org">UCLouvain</span></div>
+<div class="email">
+<span>Email:</span>
+<a href="mailto:olivier.bonaventure@uclouvain.be" class="email">olivier.bonaventure@uclouvain.be</a>
+</div>
+</address>
+</section>
+</div>
+<script>const toc = document.getElementById("toc");
+toc.querySelector("h2").addEventListener("click", e => {
+  toc.classList.toggle("active");
+});
+toc.querySelector("nav").addEventListener("click", e => {
+  toc.classList.remove("active");
+});
+</script>
+</body>
+</html>
