@@ -117,9 +117,10 @@ repair symbol.
 # Network packets and coded symbols
 
 QUIC endpoints exchange information over a network channel. Adding
-Forward Erasure Correction to QUIC introduces a FEC decoder and encoder
-in the QUIC endpoint. The encoder and decoder exchange source
-and repair symbols that are carried through QUIC frames inside QUIC packets.
+Forward Erasure Correction to QUIC introduces adds a FEC encoder and a
+FEC decoder to the QUIC endpoint. The encoder and decoder exchange source
+and repair symbols that are carried through QUIC frames inside QUIC
+packets.
 {{fig-packets-and-symbols}} illustrates how a FEC-enabled QUIC
 endpoint behaves.
 
