@@ -114,61 +114,55 @@ implementation or a program running in a separate process or machine.
 Coding window: window of source symbols that are required to decode a
 repair symbol.
 
-# The network channel and the coding channel
+# Network packets and coded symbols
 
 QUIC endpoints exchange information over a network channel. Adding
-Forward Erasure Correction to QUIC enables an endpoint to receive information
-over a coding channel.  A coding channel can be seen as a communication
-channel between a QUIC receiver and a FEC decoder. The decoder often
-runs on the same machine as the QUIC receiver and can even be part of the
-protocol implementation itself. A source symbol is received through the coding
-channel when it is recovered by the FEC decoder instead of being explicitly
-received through the network. Only the data sent on the network channel is
-really transmitted on the wire between the two QUIC endpoints.
-{{fig-network-and-coding-channels}} illustrates how symbols can be received
-from both channels.
+Forward Erasure Correction to QUIC introduces a FEC decoder and encoder
+in the QUIC endpoint. The encoder and decoder exchange source
+and repair symbols that are carried through QUIC frames inside QUIC packets.
+{{fig-packets-and-symbols}} illustrates how a FEC-enabled QUIC
+endpoint behaves.
 
 ~~~~
+  +---------------------------------------------------------+
+  |                       Application                       |
+  +---------------------------------------------------------+
+     |                                                   ^
+     | Application data           Received and recovered |
+     | to send                          application data |
+  ___|___________________________________________________|_______
+ |   v                                                   |       |
+ | +---------+                QUIC              +---------+      |
+ | |   FEC   |                                  |   FEC   |      |
+ | | Encoder |                                  | Decoder |      |
+ | +---------+                                  +---------+      |
+ |      | Source and                                 ^           |
+ |      | repair symbols             Received source |           |
+ |      | to send                         and repair |           |
+ |      v                                    symbols |           |
+ |   +--------+                                +----------+      |
+ |   |  QUIC  |                                |   QUIC   |      |
+ |   | Sender |                                | Receiver |      |
+ |   +--------+                                +----------+      |
+ |_______|___________________________________________^___________|
+         | QUIC packets                              |
+         | to send                          Received |
+         v                              QUIC packets |
+      +-------------------------------------------------+
+      |                     Network                     |
+      +-------------------------------------------------+
 
-            Network Channel              Coding Channel
-
-Sender                       Receiver             Decoder    Application
-  |                              |                    |              |
-  |  PACKET(1)[SOURCE_SYMBOL(1)] |                    |              |
-  |----------------------------->|  SOURCE_SYMBOL(1)  |  APP_DATA(1) |
-  |                              |------------------->|------------->|
-  |  PACKET(2)[SOURCE_SYMBOL(2)] |                    |              |
-  |--------------x               |                    |              |
-  |                              |                    |              |
-  |  PACKET(3)[REPAIR_SYMBOL]    |                    |              |
-  |----------------------------->|    REPAIR_SYMBOL   |              |
-  |                              |------------------->|              |
-  |                              |                    |(recomputes)  |
-  |                              |                    |(the source)  |
-  |                              |                    |(symbol    )  |
-  |                              |                    |              |
-  |                              |                    |  APP_DATA(2) |
-  |                              |                    |------------->|
-  |                              |                    |              |
-  |                              |                    |              |
 ~~~~
-{: #fig-network-and-coding-channels title="Receiving symbols through
-the network channel"}
+{: #fig-packets-and-symbols title="Exchanging source and
+repair symbols over a QUIC connection"}
 
-
-In this illustration, the sender sends three QUIC packets through the
-network channel. Packets 1 and 2 carry one source symbol each
-and packet 3 carries one repair symbol protecting the
-two source symbols. The source symbols each carry application data
-(APP_DATA), e.g. through STREAM frames Packet 2 is lost due to network
-imperfection preventing SOURCE_SYMBOL(2) from being received through
-the network channel. The FEC decoder reconstructs SOURCE_SYMBOL(2) by
-combining SOURCE_SYMBOL(1) and REPAIR_SYMBOL. SOURCE_SYMBOL(2) is thus
-received through the coding channel. Note that SOURCE_SYMBOL(2) is not
-received as a packet since QUIC packets are only exchanged through the
-network channel. On the other hand, source symbols are carried by QUIC
-packets through the network channel and sent directly to the decoder
-through the coding channel..
+When the application wants to send new data over the connection (left
+part of {{fig-packets-and-symbols}}), the Encoder encodes the
+application data into one or several source symbols and generates repair
+symbols protecting these when needed. These symbols are then packed into
+network packets by the Sender.
+When repair symbols must be sent, the Sender packs them inside
+dedicated QUIC frames discussed in {{sec-repair-frame}}.
 
 
 # FEC and the loss recovery mechanism
@@ -178,7 +172,7 @@ classical QUIC loss recovery mechanism {{QUIC-RECOVERY}}. It does
 not replace it by any means. A QUIC endpoint MAY ignore every received
 repair symbol and MAY not perform any symbol recovery at all. The FEC
 mechanism is only intended to allow a receiver recovering faster from
-packet losses on the network channel if it values the timeliness of
+packet losses on the network if it values the timeliness of
 data delivery.
 
 
@@ -202,9 +196,7 @@ streams payload. The idea is simple when using a single stream but becomes
 complicated and requires more signaling in a multi-stream scenario. It also
 cannot protect DATAGRAM frames.
 In this document, we propose to consider whole frames as part of the source
-symbols. Source symbols are thus the counterpart to QUIC packets for the
-coding channel. Packets carry frames through the network channel and
-source symbols allow receiving frames from the coding channel.
+symbols.
 In order to reduce signalling between the peers, a single source symbol
 MUST NOT contain the frames of several QUIC packets at the same time.
 
@@ -383,10 +375,7 @@ window sizes received for smaller window epochs.
 ## Announcing the recovered symbols
 {: #sec-symbol-ack-frame}
 
-The FEC receiver MAY advertise the source symbols that have been received
-either through the network or coding channels to avoid the sender
-retransmitting the data of the recovered source symbols. This can be
-done using the SYMBOL_ACK frame as shown in {{fig-symbol-ack-frame}}.
+The FEC receiver MAY advertise the recovered source symbols to avoid the sender retransmitting already recovered data. This can be done using the SYMBOL_ACK frame as shown in {{fig-symbol-ack-frame}}.
 
 ~~~~
 SYMBOL_ACK {
@@ -408,13 +397,13 @@ source symbols. The SYMBOL_ACK frame MUST NOT be used to infer any congestion
 state on the network (see {{sec-coding-and-congestion}}).
 
 
-# Coding channel and congestion control
+# Coding and congestion control
 {: #sec-coding-and-congestion}
 
-The coding and network channels being unrelated, receiving symbols
-through the coding channel MUST NOT be used to infer any congestion state on
-the network channel. More specifically, receiving a symbol through the coding
-channel MUST NOT be used to hide the network loss event of the corresponding
+The fact of successfully recovering symbols SHOULD NOT be
+used to infer any congestion state on the network.
+More specifically, the recovery a of a symbol through FEC decoding
+SHOULD NOT be used to hide the network loss event of the corresponding
 packet to the congestion control, applying Recommandation 1 of {{RFC9265}}.
 
 
