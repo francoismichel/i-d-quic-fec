@@ -12,28 +12,26 @@
 needed for QUIC to apply Forward Erasure Correction on the data sent
 through the network. 
     " name="description">
-<meta content="xml2rfc 3.15.1" name="generator">
+<meta content="xml2rfc 3.18.1" name="generator">
 <meta content="FEC" name="keyword">
 <meta content="network coding" name="keyword">
 <meta content="QUIC" name="keyword">
 <meta content="draft-michel-quic-fec-latest" name="ietf.draft">
 <!-- Generator version information:
-  xml2rfc 3.15.1
-    Python 3.10.5
-    appdirs 1.4.4
+  xml2rfc 3.18.1
+    Python 3.11.5
     ConfigArgParse 1.5.3
-    google-i18n-address 2.5.2
-    html5lib 1.1
+    google-i18n-address 3.1.0
     intervaltree 3.1.0
     Jinja2 3.1.2
-    kitchen 1.2.6
-    lxml 4.9.1
-    MarkupSafe 2.1.1
+    lxml 4.9.3
+    platformdirs 3.11.0
     pycountry 22.3.5
     PyYAML 6.0
-    requests 2.27.1
-    setuptools 59.4.0
+    requests 2.31.0
+    setuptools 67.7.2
     six 1.16.0
+    wcwidth 0.2.8
 -->
 <link href="draft-michel-quic-fec.xml" rel="alternate" type="application/rfc+xml">
 <link href="#copyright" rel="license">
@@ -364,7 +362,7 @@ ul.empty li, .ulEmpty li {
   margin-top: 0.5em;
 }
 :is(ul, ol).compact, .ulCompact, .olCompact {
-  line-height: 100%;
+  line-height: 1;
   margin: 0 0 0 2em;
 }
 
@@ -374,10 +372,13 @@ dl {
   --indent: 3ch;
   /* --indent: attr(indent ch); not supported in any browser, but we can dream */
 }
+dl.olPercent {
+  --indent: 5ch;
+}
 dl > dt {
   float: left;
-  margin-right: 1em;
-  min-width: 20ch;
+  margin-right: 2ch;
+  min-width: 8ch;
 }
 dl.dlNewline > dt {
   float: none;
@@ -386,6 +387,9 @@ dl > dd {
   margin-bottom: .8em;
   margin-left: var(--indent) !important; /* stupid element overrides */
   min-height: 2ex;
+}
+dl.olPercent > dt {
+  min-width: calc(var(--indent) - 2ch);
 }
 :is(dl.compact, .dlCompact) > dd {
   margin-bottom: 0;
@@ -400,7 +404,7 @@ dl > dd > dl {
   margin-top: 0.5em;
   margin-bottom: 0;
 }
-dl .break {
+:is(dd, span).break {
   display: none;
 }
 
@@ -408,11 +412,11 @@ dl .break {
 a, a[href].selfRef:hover {
   text-decoration: none;
 }
-a[href].selfRef {
-  color: var(--text-color);
-}
 a[href] {
   color: var(--link-color);
+}
+a[href].selfRef, .iref + a[href].internal {
+  color: var(--text-color);
 }
 a[href]:hover {
   text-decoration: underline;
@@ -420,7 +424,7 @@ a[href]:hover {
 a[href].selfRef:hover {
   background-color: var(--highlight-color);
 }
-a.xref {
+a.xref:is(.cite, .auto), :is(#status-of-memo, #copyright) a {
   white-space: nowrap;
 }
 
@@ -432,7 +436,9 @@ tt, code, pre {
 tt, code {
   /* changing the font for inline elements leads to different ascender
      and descender heights; as we want to retain baseline alignment,
-     remove leading to avoid altering the final height of lines */
+     remove leading to avoid altering the final height of lines
+     note: this fails if these blocks take an entire line,
+     a different solution would be great */
   line-height: 0;
 }
 :is(h1, h2, h3, h4, h5, h6) :is(tt, code) {
@@ -584,10 +590,14 @@ hr {
 .bcp14 {
   font-variant: small-caps;
   font-weight: 600;
-  font-size: 14.5px;
+  font-size: var(--small-font-size);
 }
 .role {
   font-variant: all-small-caps;
+}
+sub, sup {
+  line-height: 1;
+  font-size: 80%;
 }
 
 /* info block */
@@ -603,6 +613,7 @@ hr {
   clear: left;
   float: left;
   text-align: right;
+  margin-right: 1ch;
 }
 #identifiers dd {
   margin: 0;
@@ -643,7 +654,7 @@ hr {
 }
 #toc nav li {
   line-height: 1.3em;
-  margin: 0.75em 0;
+  margin: 2px 0;
   padding-left: 1.2em;
   text-indent: -1.2em;
 }
@@ -654,7 +665,8 @@ hr {
 .references dt {
   text-align: right;
   font-weight: bold;
-  min-width: 7em;
+  min-width: 10ch;
+  margin-right: 1.5ch;
 }
 .references dt:target::before {
   content: "⇒";
@@ -662,7 +674,7 @@ hr {
   margin: 0 10px 0 -25px;
 }
 .references dd {
-  margin-left: 8em !important;
+  margin-left: 12ch !important;
   overflow: auto;
 }
 
@@ -735,7 +747,7 @@ hr.addr {
     z-index: 2;
     top: 0;
     right: 0;
-    padding: 0;
+    padding: 1px 0 0 0;
     margin: 0;
     border-bottom: 1px solid #ccc;
     opacity: 0.6;
@@ -859,16 +871,13 @@ hr.addr {
     border-top: none;
     padding-top: 0;
   }
-  figure, pre {
+  figure, pre, .vcard {
     page-break-inside: avoid;
-  }
-  figure {
-    overflow: scroll;
   }
   h1, h2, h3, h4, h5, h6 {
     page-break-after: avoid;
   }
-  h2+*, h3+*, h4+*, h5+*, h6+* {
+  :is(h2, h3, h4, h5, h6)+*, dd {
     page-break-before: avoid;
   }
   pre {
@@ -881,6 +890,9 @@ hr.addr {
   }
   td {
     border-top: 1px solid #ddd;
+  }
+  .toplink {
+    display: none;
   }
 }
 
@@ -982,28 +994,6 @@ address div.right {
   text-align: right;
 }
 
-/* Give the table caption label the same styling as the figcaption */
-
-@media print {
-  .toplink {
-    display: none;
-  }
-
-  /* avoid overwriting the top border line with the ToC header */
-  #toc {
-    padding-top: 1px;
-  }
-
-  /* Avoid page breaks inside dl and author address entries */
-  dd {
-    page-break-before: avoid;
-  }
-  .vcard {
-    page-break-inside: avoid;
-  }
-
-}
-
 /* Dark mode. */
 @media (prefers-color-scheme: dark) {
 :root {
@@ -1029,7 +1019,7 @@ svg :is([stroke="white"], [stroke^="#fff"]) {
 svg :is([fill="black"], [fill^="#000"], :not([fill])) {
   fill: var(--text-color);
 }
-svg :is([stroke="fill"], [fill^="#fff"]) {
+svg :is([fill="white"], [fill^="#fff"]) {
   fill: var(--background-color);
 }
 </style>
@@ -1040,11 +1030,11 @@ svg :is([stroke="fill"], [fill^="#fff"]) {
 <thead><tr>
 <td class="left">Internet-Draft</td>
 <td class="center">FEC for QUIC</td>
-<td class="right">October 2022</td>
+<td class="right">October 2023</td>
 </tr></thead>
 <tfoot><tr>
 <td class="left">Michel &amp; Bonaventure</td>
-<td class="center">Expires 23 April 2023</td>
+<td class="center">Expires 19 April 2024</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1057,12 +1047,12 @@ svg :is([stroke="fill"], [fill^="#fff"]) {
 <dd class="internet-draft">draft-michel-quic-fec-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2022-10-20" class="published">20 October 2022</time>
+<time datetime="2023-10-17" class="published">17 October 2023</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Experimental</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2023-04-23">23 April 2023</time></dd>
+<dd class="expires"><time datetime="2024-04-19">19 April 2024</time></dd>
 <dt class="label-authors">Authors:</dt>
 <dd class="authors">
 <div class="author">
@@ -1118,7 +1108,7 @@ through the network.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 23 April 2023.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 19 April 2024.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1127,7 +1117,7 @@ through the network.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
 <a href="#name-copyright-notice" class="section-name selfRef">Copyright Notice</a>
         </h2>
 <p id="section-boilerplate.2-1">
-            Copyright (c) 2022 IETF Trust and the persons identified as the
+            Copyright (c) 2023 IETF Trust and the persons identified as the
             document authors. All rights reserved.<a href="#section-boilerplate.2-1" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.2-2">
             This document is subject to BCP 78 and the IETF Trust's Legal
@@ -1159,7 +1149,7 @@ through the network.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3">
-            <p id="section-toc.1-1.3.1"><a href="#section-3" class="auto internal xref">3</a>.  <a href="#name-the-network-channel-and-the" class="internal xref">The network channel and the coding channel</a></p>
+            <p id="section-toc.1-1.3.1"><a href="#section-3" class="auto internal xref">3</a>.  <a href="#name-network-packets-and-coded-s" class="internal xref">Network packets and coded symbols</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4">
             <p id="section-toc.1-1.4.1"><a href="#section-4" class="auto internal xref">4</a>.  <a href="#name-fec-and-the-loss-recovery-m" class="internal xref">FEC and the loss recovery mechanism</a></p>
@@ -1193,7 +1183,7 @@ through the network.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6">
-            <p id="section-toc.1-1.6.1"><a href="#section-6" class="auto internal xref">6</a>.  <a href="#name-coding-channel-and-congesti" class="internal xref">Coding channel and congestion control</a></p>
+            <p id="section-toc.1-1.6.1"><a href="#section-6" class="auto internal xref">6</a>.  <a href="#name-coding-and-congestion-contr" class="internal xref">Coding and congestion control</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7">
             <p id="section-toc.1-1.7.1"><a href="#section-7" class="auto internal xref">7</a>.  <a href="#name-negociating-the-fec-extensi" class="internal xref">Negociating the FEC extension using transport parameters</a></p>
@@ -1308,66 +1298,62 @@ repair symbol.<a href="#section-2.1-9" class="pilcrow">¶</a></p>
 </div>
 </section>
 </div>
-<div id="the-network-channel-and-the-coding-channel">
+<div id="network-packets-and-coded-symbols">
 <section id="section-3">
-      <h2 id="name-the-network-channel-and-the">
-<a href="#section-3" class="section-number selfRef">3. </a><a href="#name-the-network-channel-and-the" class="section-name selfRef">The network channel and the coding channel</a>
+      <h2 id="name-network-packets-and-coded-s">
+<a href="#section-3" class="section-number selfRef">3. </a><a href="#name-network-packets-and-coded-s" class="section-name selfRef">Network packets and coded symbols</a>
       </h2>
 <p id="section-3-1">QUIC endpoints exchange information over a network channel. Adding
-Forward Erasure Correction to QUIC enables an endpoint to receive information
-over a coding channel.  A coding channel can be seen as a communication
-channel between a QUIC receiver and a FEC decoder. The decoder often
-runs on the same machine as the QUIC receiver and can even be part of the
-protocol implementation itself. A source symbol is received through the coding
-channel when it is recovered by the FEC decoder instead of being explicitly
-received through the network. Only the data sent on the network channel is
-really transmitted on the wire between the two QUIC endpoints.
-<a href="#fig-network-and-coding-channels" class="auto internal xref">Figure 1</a> illustrates how symbols can be received
-from both channels.<a href="#section-3-1" class="pilcrow">¶</a></p>
-<span id="name-receiving-symbols-through-t"></span><div id="fig-network-and-coding-channels">
+Forward Erasure Correction to QUIC introduces a FEC decoder and encoder
+in the QUIC endpoint. The encoder and decoder exchange source
+and repair symbols that are carried through QUIC frames inside QUIC packets.
+<a href="#fig-packets-and-symbols" class="auto internal xref">Figure 1</a> illustrates how a FEC-enabled QUIC
+endpoint behaves.<a href="#section-3-1" class="pilcrow">¶</a></p>
+<span id="name-exchanging-source-and-repai"></span><div id="fig-packets-and-symbols">
 <figure id="figure-1">
         <div class="alignLeft art-text artwork" id="section-3-2.1">
 <pre>
-            Network Channel              Coding Channel
+  +---------------------------------------------------------+
+  |                       Application                       |
+  +---------------------------------------------------------+
+     |                                                   ^
+     | Application data           Received and recovered |
+     | to send                          application data |
+  ___|___________________________________________________|_______
+ |   v                                                   |       |
+ | +---------+                QUIC              +---------+      |
+ | |   FEC   |                                  |   FEC   |      |
+ | | Encoder |                                  | Decoder |      |
+ | +---------+                                  +---------+      |
+ |      | Source and                                 ^           |
+ |      | repair symbols             Received source |           |
+ |      | to send                         and repair |           |
+ |      v                                    symbols |           |
+ |   +--------+                                +----------+      |
+ |   |  QUIC  |                                |   QUIC   |      |
+ |   | Sender |                                | Receiver |      |
+ |   +--------+                                +----------+      |
+ |_______|___________________________________________^___________|
+         | QUIC packets                              |
+         | to send                          Received |
+         v                              QUIC packets |
+      +-------------------------------------------------+
+      |                     Network                     |
+      +-------------------------------------------------+
 
-Sender                       Receiver             Decoder    Application
-  |                              |                    |              |
-  |  PACKET(1)[SOURCE_SYMBOL(1)] |                    |              |
-  |-----------------------------&gt;|  SOURCE_SYMBOL(1)  |  APP_DATA(1) |
-  |                              |-------------------&gt;|-------------&gt;|
-  |  PACKET(2)[SOURCE_SYMBOL(2)] |                    |              |
-  |--------------x               |                    |              |
-  |                              |                    |              |
-  |  PACKET(3)[REPAIR_SYMBOL]    |                    |              |
-  |-----------------------------&gt;|    REPAIR_SYMBOL   |              |
-  |                              |-------------------&gt;|              |
-  |                              |                    |(recomputes)  |
-  |                              |                    |(the source)  |
-  |                              |                    |(symbol    )  |
-  |                              |                    |              |
-  |                              |                    |  APP_DATA(2) |
-  |                              |                    |-------------&gt;|
-  |                              |                    |              |
-  |                              |                    |              |
 </pre>
 </div>
 <figcaption><a href="#figure-1" class="selfRef">Figure 1</a>:
-<a href="#name-receiving-symbols-through-t" class="selfRef">Receiving symbols through the network channel</a>
+<a href="#name-exchanging-source-and-repai" class="selfRef">Exchanging source and repair symbols over a QUIC connection</a>
         </figcaption></figure>
 </div>
-<p id="section-3-3">In this illustration, the sender sends three QUIC packets through the
-network channel. Packets 1 and 2 carry one source symbol each
-and packet 3 carries one repair symbol protecting the
-two source symbols. The source symbols each carry application data
-(APP_DATA), e.g. through STREAM frames Packet 2 is lost due to network
-imperfection preventing SOURCE_SYMBOL(2) from being received through
-the network channel. The FEC decoder reconstructs SOURCE_SYMBOL(2) by
-combining SOURCE_SYMBOL(1) and REPAIR_SYMBOL. SOURCE_SYMBOL(2) is thus
-received through the coding channel. Note that SOURCE_SYMBOL(2) is not
-received as a packet since QUIC packets are only exchanged through the
-network channel. On the other hand, source symbols are carried by QUIC
-packets through the network channel and sent directly to the decoder
-through the coding channel..<a href="#section-3-3" class="pilcrow">¶</a></p>
+<p id="section-3-3">When the application wants to send new data over the connection (left
+part of <a href="#fig-packets-and-symbols" class="auto internal xref">Figure 1</a>), the Encoder encodes the
+application data into one or several source symbols and generates repair
+symbols protecting these when needed. These symbols are then packed into
+network packets by the Sender.
+When repair symbols must be sent, the Sender packs them inside
+dedicated QUIC frames discussed in <a href="#sec-repair-frame" class="auto internal xref">Section 5.3</a>.<a href="#section-3-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="fec-and-the-loss-recovery-mechanism">
@@ -1380,7 +1366,7 @@ classical QUIC loss recovery mechanism <span>[<a href="#QUIC-RECOVERY" class="ci
 not replace it by any means. A QUIC endpoint <span class="bcp14">MAY</span> ignore every received
 repair symbol and <span class="bcp14">MAY</span> not perform any symbol recovery at all. The FEC
 mechanism is only intended to allow a receiver recovering faster from
-packet losses on the network channel if it values the timeliness of
+packet losses on the network if it values the timeliness of
 data delivery.<a href="#section-4-1" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -1407,9 +1393,7 @@ streams payload. The idea is simple when using a single stream but becomes
 complicated and requires more signaling in a multi-stream scenario. It also
 cannot protect DATAGRAM frames.
 In this document, we propose to consider whole frames as part of the source
-symbols. Source symbols are thus the counterpart to QUIC packets for the
-coding channel. Packets carry frames through the network channel and
-source symbols allow receiving frames from the coding channel.
+symbols.
 In order to reduce signalling between the peers, a single source symbol
 <span class="bcp14">MUST NOT</span> contain the frames of several QUIC packets at the same time.<a href="#section-5.1-2" class="pilcrow">¶</a></p>
 </section>
@@ -1625,10 +1609,7 @@ window sizes received for smaller window epochs.<a href="#section-5.4-4" class="
         <h3 id="name-announcing-the-recovered-sy">
 <a href="#section-5.5" class="section-number selfRef">5.5. </a><a href="#name-announcing-the-recovered-sy" class="section-name selfRef">Announcing the recovered symbols</a>
         </h3>
-<p id="section-5.5-1">The FEC receiver <span class="bcp14">MAY</span> advertise the source symbols that have been received
-either through the network or coding channels to avoid the sender
-retransmitting the data of the recovered source symbols. This can be
-done using the SYMBOL_ACK frame as shown in <a href="#fig-symbol-ack-frame" class="auto internal xref">Figure 8</a>.<a href="#section-5.5-1" class="pilcrow">¶</a></p>
+<p id="section-5.5-1">The FEC receiver <span class="bcp14">MAY</span> advertise the recovered source symbols to avoid the sender retransmitting already recovered data. This can be done using the SYMBOL_ACK frame as shown in <a href="#fig-symbol-ack-frame" class="auto internal xref">Figure 8</a>.<a href="#section-5.5-1" class="pilcrow">¶</a></p>
 <span id="name-symbol_ack-frame-format"></span><div id="fig-symbol-ack-frame">
 <figure id="figure-8">
           <div class="alignLeft art-text artwork" id="section-5.5-2.1">
@@ -1659,13 +1640,13 @@ state on the network (see <a href="#sec-coding-and-congestion" class="auto inter
 </div>
 <div id="sec-coding-and-congestion">
 <section id="section-6">
-      <h2 id="name-coding-channel-and-congesti">
-<a href="#section-6" class="section-number selfRef">6. </a><a href="#name-coding-channel-and-congesti" class="section-name selfRef">Coding channel and congestion control</a>
+      <h2 id="name-coding-and-congestion-contr">
+<a href="#section-6" class="section-number selfRef">6. </a><a href="#name-coding-and-congestion-contr" class="section-name selfRef">Coding and congestion control</a>
       </h2>
-<p id="section-6-1">The coding and network channels being unrelated, receiving symbols
-through the coding channel <span class="bcp14">MUST NOT</span> be used to infer any congestion state on
-the network channel. More specifically, receiving a symbol through the coding
-channel <span class="bcp14">MUST NOT</span> be used to hide the network loss event of the corresponding
+<p id="section-6-1">The fact of successfully recovering symbols <span class="bcp14">SHOULD NOT</span> be
+used to infer any congestion state on the network.
+More specifically, the recovery a of a symbol through FEC decoding
+<span class="bcp14">SHOULD NOT</span> be used to hide the network loss event of the corresponding
 packet to the congestion control, applying Recommandation 1 of <span>[<a href="#RFC9265" class="cite xref">RFC9265</a>]</span>.<a href="#section-6-1" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -1907,6 +1888,7 @@ version 00 of this document is 0x238ffece00).<a href="#section-9.1-2" class="pil
       <h2 id="name-references">
 <a href="#name-references" class="section-name selfRef">References</a>
       </h2>
+<div id="sec-normative-references">
 <section id="section-11.1">
         <h3 id="name-normative-references">
 <a href="#name-normative-references" class="section-name selfRef">Normative References</a>
@@ -1934,6 +1916,8 @@ version 00 of this document is 0x238ffece00).<a href="#section-9.1-2" class="pil
 <dd class="break"></dd>
 </dl>
 </section>
+</div>
+<div id="sec-informative-references">
 <section id="section-11.2">
         <h3 id="name-informative-references">
 <a href="#name-informative-references" class="section-name selfRef">Informative References</a>
@@ -1941,11 +1925,11 @@ version 00 of this document is 0x238ffece00).<a href="#section-9.1-2" class="pil
 <dl class="references">
 <dt id="FlEC">[FlEC]</dt>
         <dd>
-<span class="refAuthor">Michel, F.</span>, <span class="refAuthor">Cohen, A.</span>, <span class="refAuthor">Malak, D.</span>, <span class="refAuthor">Coninck, Q.</span>, <span class="refAuthor">Medard, M.</span>, and <span class="refAuthor">O. Bonaventure</span>, <span class="refTitle">"FlEC: Enhancing QUIC With Application-Tailored Reliability Mechanisms"</span>, <span class="seriesInfo">IEEE/ACM Transactions on Networking pp. 1-14</span>, <span class="seriesInfo">DOI 10.1109/tnet.2022.3195611</span>, <time datetime="2022" class="refDate">2022</time>, <span>&lt;<a href="https://doi.org/10.1109/tnet.2022.3195611">https://doi.org/10.1109/tnet.2022.3195611</a>&gt;</span>. </dd>
+<span class="refAuthor">Michel, F.</span>, <span class="refAuthor">Cohen, A.</span>, <span class="refAuthor">Malak, D.</span>, <span class="refAuthor">De Coninck, Q.</span>, <span class="refAuthor">Médard, M.</span>, and <span class="refAuthor">O. Bonaventure</span>, <span class="refTitle">"FlEC: Enhancing QUIC With Application-Tailored Reliability Mechanisms"</span>, <span class="refContent">Institute of Electrical and Electronics Engineers (IEEE)</span>, <span class="seriesInfo">IEEE/ACM Transactions on Networking vol. 31, no. 2, pp. 606-619</span>, <span class="seriesInfo">DOI 10.1109/tnet.2022.3195611</span>, <time datetime="2023-04" class="refDate">April 2023</time>, <span>&lt;<a href="https://doi.org/10.1109/tnet.2022.3195611">https://doi.org/10.1109/tnet.2022.3195611</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="I-D.irtf-nwcrg-tetrys">[I-D.irtf-nwcrg-tetrys]</dt>
         <dd>
-<span class="refAuthor">Detchart, J.</span>, <span class="refAuthor">Lochin, E.</span>, <span class="refAuthor">Lacan, J.</span>, and <span class="refAuthor">V. Roca</span>, <span class="refTitle">"Tetrys, an On-the-Fly Network Coding Protocol"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-irtf-nwcrg-tetrys-03</span>, <time datetime="2022-09-06" class="refDate">6 September 2022</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-irtf-nwcrg-tetrys-03">https://datatracker.ietf.org/doc/html/draft-irtf-nwcrg-tetrys-03</a>&gt;</span>. </dd>
+<span class="refAuthor">Detchart, J.</span>, <span class="refAuthor">Lochin, E.</span>, <span class="refAuthor">Lacan, J.</span>, and <span class="refAuthor">V. Roca</span>, <span class="refTitle">"Tetrys: An On-the-Fly Network Coding Protocol"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-irtf-nwcrg-tetrys-04</span>, <time datetime="2022-11-17" class="refDate">17 November 2022</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-irtf-nwcrg-tetrys-04">https://datatracker.ietf.org/doc/html/draft-irtf-nwcrg-tetrys-04</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="I-D.roca-nwcrg-rlc-fec-scheme-for-quic">[I-D.roca-nwcrg-rlc-fec-scheme-for-quic]</dt>
         <dd>
@@ -1957,7 +1941,7 @@ version 00 of this document is 0x238ffece00).<a href="#section-9.1-2" class="pil
 <dd class="break"></dd>
 <dt id="QUIC-FEC">[QUIC-FEC]</dt>
         <dd>
-<span class="refAuthor">Michel, F.</span>, <span class="refAuthor">De Coninck, Q.</span>, and <span class="refAuthor">O. Bonaventure</span>, <span class="refTitle">"QUIC-FEC: Bringing the benefits of Forward Erasure Correction to QUIC"</span>, <span class="seriesInfo">2019 IFIP Networking Conference (IFIP Networking)</span>, <span class="seriesInfo">DOI 10.23919/ifipnetworking.2019.8816838</span>, <time datetime="2019-05" class="refDate">May 2019</time>, <span>&lt;<a href="https://doi.org/10.23919/ifipnetworking.2019.8816838">https://doi.org/10.23919/ifipnetworking.2019.8816838</a>&gt;</span>. </dd>
+<span class="refAuthor">Michel, F.</span>, <span class="refAuthor">De Coninck, Q.</span>, and <span class="refAuthor">O. Bonaventure</span>, <span class="refTitle">"QUIC-FEC: Bringing the benefits of Forward Erasure Correction to QUIC"</span>, <span class="refContent">IEEE</span>, <span class="seriesInfo">2019 IFIP Networking Conference (IFIP Networking)</span>, <span class="seriesInfo">DOI 10.23919/ifipnetworking.2019.8816838</span>, <time datetime="2019-05" class="refDate">May 2019</time>, <span>&lt;<a href="https://doi.org/10.23919/ifipnetworking.2019.8816838">https://doi.org/10.23919/ifipnetworking.2019.8816838</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC6865">[RFC6865]</dt>
         <dd>
@@ -1965,10 +1949,11 @@ version 00 of this document is 0x238ffece00).<a href="#section-9.1-2" class="pil
 <dd class="break"></dd>
 <dt id="rQUIC">[rQUIC]</dt>
       <dd>
-<span class="refAuthor">Garrido, P.</span>, <span class="refAuthor">Sanchez, I.</span>, <span class="refAuthor">Ferlin, S.</span>, <span class="refAuthor">Aguero, R.</span>, and <span class="refAuthor">O. Alay</span>, <span class="refTitle">"rQUIC: Integrating FEC with QUIC for Robust Wireless Communications"</span>, <span class="seriesInfo">2019 IEEE Global Communications Conference (GLOBECOM)</span>, <span class="seriesInfo">DOI 10.1109/globecom38437.2019.9013401</span>, <time datetime="2019-12" class="refDate">December 2019</time>, <span>&lt;<a href="https://doi.org/10.1109/globecom38437.2019.9013401">https://doi.org/10.1109/globecom38437.2019.9013401</a>&gt;</span>. </dd>
+<span class="refAuthor">Garrido, P.</span>, <span class="refAuthor">Sanchez, I.</span>, <span class="refAuthor">Ferlin, S.</span>, <span class="refAuthor">Aguero, R.</span>, and <span class="refAuthor">O. Alay</span>, <span class="refTitle">"rQUIC: Integrating FEC with QUIC for Robust Wireless Communications"</span>, <span class="refContent">IEEE</span>, <span class="seriesInfo">2019 IEEE Global Communications Conference (GLOBECOM)</span>, <span class="seriesInfo">DOI 10.1109/globecom38437.2019.9013401</span>, <time datetime="2019-12" class="refDate">December 2019</time>, <span>&lt;<a href="https://doi.org/10.1109/globecom38437.2019.9013401">https://doi.org/10.1109/globecom38437.2019.9013401</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 </dl>
 </section>
+</div>
 </section>
 <div id="authors-addresses">
 <section id="appendix-A">

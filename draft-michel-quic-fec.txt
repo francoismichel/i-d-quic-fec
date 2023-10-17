@@ -5,7 +5,7 @@
 QUIC                                                           F. Michel
 Internet-Draft                                            O. Bonaventure
 Intended status: Experimental                                  UCLouvain
-Expires: 23 April 2023                                   20 October 2022
+Expires: 19 April 2024                                   17 October 2023
 
 
            Forward Erasure Correction for QUIC loss recovery
@@ -49,11 +49,11 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 23 April 2023.
+   This Internet-Draft will expire on 19 April 2024.
 
 Copyright Notice
 
-   Copyright (c) 2022 IETF Trust and the persons identified as the
+   Copyright (c) 2023 IETF Trust and the persons identified as the
    document authors.  All rights reserved.
 
    This document is subject to BCP 78 and the IETF Trust's Legal
@@ -70,7 +70,7 @@ Table of Contents
    1.  Introduction
    2.  Conventions and Definitions
      2.1.  FEC-related definitions
-   3.  The network channel and the coding channel
+   3.  Network packets and coded symbols
    4.  FEC and the loss recovery mechanism
    5.  Protocol requirements for protecting information through FEC
      5.1.  Defining the FEC-protected parts of a QUIC payload
@@ -80,7 +80,7 @@ Table of Contents
      5.3.  Sending the repair symbols
      5.4.  Announcing the coding window size
      5.5.  Announcing the recovered symbols
-   6.  Coding channel and congestion control
+   6.  Coding and congestion control
    7.  Negociating the FEC extension using transport parameters
      7.1.  enable_fec
      7.2.  decoder_fec_scheme
@@ -155,57 +155,51 @@ Table of Contents
    Coding window: window of source symbols that are required to decode a
    repair symbol.
 
-3.  The network channel and the coding channel
+3.  Network packets and coded symbols
 
    QUIC endpoints exchange information over a network channel.  Adding
-   Forward Erasure Correction to QUIC enables an endpoint to receive
-   information over a coding channel.  A coding channel can be seen as a
-   communication channel between a QUIC receiver and a FEC decoder.  The
-   decoder often runs on the same machine as the QUIC receiver and can
-   even be part of the protocol implementation itself.  A source symbol
-   is received through the coding channel when it is recovered by the
-   FEC decoder instead of being explicitly received through the network.
-   Only the data sent on the network channel is really transmitted on
-   the wire between the two QUIC endpoints.  Figure 1 illustrates how
-   symbols can be received from both channels.
+   Forward Erasure Correction to QUIC introduces a FEC decoder and
+   encoder in the QUIC endpoint.  The encoder and decoder exchange
+   source and repair symbols that are carried through QUIC frames inside
+   QUIC packets.  Figure 1 illustrates how a FEC-enabled QUIC endpoint
+   behaves.
 
-            Network Channel              Coding Channel
+     +---------------------------------------------------------+
+     |                       Application                       |
+     +---------------------------------------------------------+
+        |                                                   ^
+        | Application data           Received and recovered |
+        | to send                          application data |
+     ___|___________________________________________________|_______
+    |   v                                                   |       |
+    | +---------+                QUIC              +---------+      |
+    | |   FEC   |                                  |   FEC   |      |
+    | | Encoder |                                  | Decoder |      |
+    | +---------+                                  +---------+      |
+    |      | Source and                                 ^           |
+    |      | repair symbols             Received source |           |
+    |      | to send                         and repair |           |
+    |      v                                    symbols |           |
+    |   +--------+                                +----------+      |
+    |   |  QUIC  |                                |   QUIC   |      |
+    |   | Sender |                                | Receiver |      |
+    |   +--------+                                +----------+      |
+    |_______|___________________________________________^___________|
+            | QUIC packets                              |
+            | to send                          Received |
+            v                              QUIC packets |
+         +-------------------------------------------------+
+         |                     Network                     |
+         +-------------------------------------------------+
 
-Sender                       Receiver             Decoder    Application
-  |                              |                    |              |
-  |  PACKET(1)[SOURCE_SYMBOL(1)] |                    |              |
-  |----------------------------->|  SOURCE_SYMBOL(1)  |  APP_DATA(1) |
-  |                              |------------------->|------------->|
-  |  PACKET(2)[SOURCE_SYMBOL(2)] |                    |              |
-  |--------------x               |                    |              |
-  |                              |                    |              |
-  |  PACKET(3)[REPAIR_SYMBOL]    |                    |              |
-  |----------------------------->|    REPAIR_SYMBOL   |              |
-  |                              |------------------->|              |
-  |                              |                    |(recomputes)  |
-  |                              |                    |(the source)  |
-  |                              |                    |(symbol    )  |
-  |                              |                    |              |
-  |                              |                    |  APP_DATA(2) |
-  |                              |                    |------------->|
-  |                              |                    |              |
-  |                              |                    |              |
+   Figure 1: Exchanging source and repair symbols over a QUIC connection
 
-       Figure 1: Receiving symbols through the network channel
-
-   In this illustration, the sender sends three QUIC packets through the
-   network channel.  Packets 1 and 2 carry one source symbol each and
-   packet 3 carries one repair symbol protecting the two source symbols.
-   The source symbols each carry application data (APP_DATA), e.g.
-   through STREAM frames Packet 2 is lost due to network imperfection
-   preventing SOURCE_SYMBOL(2) from being received through the network
-   channel.  The FEC decoder reconstructs SOURCE_SYMBOL(2) by combining
-   SOURCE_SYMBOL(1) and REPAIR_SYMBOL.  SOURCE_SYMBOL(2) is thus
-   received through the coding channel.  Note that SOURCE_SYMBOL(2) is
-   not received as a packet since QUIC packets are only exchanged
-   through the network channel.  On the other hand, source symbols are
-   carried by QUIC packets through the network channel and sent directly
-   to the decoder through the coding channel..
+   When the application wants to send new data over the connection (left
+   part of Figure 1), the Encoder encodes the application data into one
+   or several source symbols and generates repair symbols protecting
+   these when needed.  These symbols are then packed into network
+   packets by the Sender.  When repair symbols must be sent, the Sender
+   packs them inside dedicated QUIC frames discussed in Section 5.3.
 
 4.  FEC and the loss recovery mechanism
 
@@ -214,8 +208,8 @@ Sender                       Receiver             Decoder    Application
    replace it by any means.  A QUIC endpoint MAY ignore every received
    repair symbol and MAY not perform any symbol recovery at all.  The
    FEC mechanism is only intended to allow a receiver recovering faster
-   from packet losses on the network channel if it values the timeliness
-   of data delivery.
+   from packet losses on the network if it values the timeliness of data
+   delivery.
 
 5.  Protocol requirements for protecting information through FEC
 
@@ -238,11 +232,9 @@ Sender                       Receiver             Decoder    Application
    becomes complicated and requires more signaling in a multi-stream
    scenario.  It also cannot protect DATAGRAM frames.  In this document,
    we propose to consider whole frames as part of the source symbols.
-   Source symbols are thus the counterpart to QUIC packets for the
-   coding channel.  Packets carry frames through the network channel and
-   source symbols allow receiving frames from the coding channel.  In
-   order to reduce signalling between the peers, a single source symbol
-   MUST NOT contain the frames of several QUIC packets at the same time.
+   In order to reduce signalling between the peers, a single source
+   symbol MUST NOT contain the frames of several QUIC packets at the
+   same time.
 
 5.2.  Identifying the source symbols from QUIC packets
 
@@ -398,10 +390,9 @@ Sender                       Receiver             Decoder    Application
 
 5.5.  Announcing the recovered symbols
 
-   The FEC receiver MAY advertise the source symbols that have been
-   received either through the network or coding channels to avoid the
-   sender retransmitting the data of the recovered source symbols.  This
-   can be done using the SYMBOL_ACK frame as shown in Figure 8.
+   The FEC receiver MAY advertise the recovered source symbols to avoid
+   the sender retransmitting already recovered data.  This can be done
+   using the SYMBOL_ACK frame as shown in Figure 8.
 
    SYMBOL_ACK {
      Largest Acknowledged (i),
@@ -422,14 +413,13 @@ Sender                       Receiver             Decoder    Application
    frame MUST NOT be used to infer any congestion state on the network
    (see Section 6).
 
-6.  Coding channel and congestion control
+6.  Coding and congestion control
 
-   The coding and network channels being unrelated, receiving symbols
-   through the coding channel MUST NOT be used to infer any congestion
-   state on the network channel.  More specifically, receiving a symbol
-   through the coding channel MUST NOT be used to hide the network loss
-   event of the corresponding packet to the congestion control, applying
-   Recommandation 1 of [RFC9265].
+   The fact of successfully recovering symbols SHOULD NOT be used to
+   infer any congestion state on the network.  More specifically, the
+   recovery a of a symbol through FEC decoding SHOULD NOT be used to
+   hide the network loss event of the corresponding packet to the
+   congestion control, applying Recommandation 1 of [RFC9265].
 
 7.  Negociating the FEC extension using transport parameters
 
@@ -580,19 +570,20 @@ Normative References
 
 Informative References
 
-   [FlEC]     Michel, F., Cohen, A., Malak, D., Coninck, Q., Medard, M.,
-              and O. Bonaventure, "FlEC: Enhancing QUIC With
-              Application-Tailored Reliability Mechanisms", IEEE/ACM
-              Transactions on Networking pp. 1-14,
-              DOI 10.1109/tnet.2022.3195611, 2022,
+   [FlEC]     Michel, F., Cohen, A., Malak, D., De Coninck, Q., Médard,
+              M., and O. Bonaventure, "FlEC: Enhancing QUIC With
+              Application-Tailored Reliability Mechanisms", Institute of
+              Electrical and Electronics Engineers (IEEE), IEEE/ACM
+              Transactions on Networking vol. 31, no. 2, pp. 606-619,
+              DOI 10.1109/tnet.2022.3195611, April 2023,
               <https://doi.org/10.1109/tnet.2022.3195611>.
 
    [I-D.irtf-nwcrg-tetrys]
-              Detchart, J., Lochin, E., Lacan, J., and V. Roca, "Tetrys,
-              an On-the-Fly Network Coding Protocol", Work in Progress,
-              Internet-Draft, draft-irtf-nwcrg-tetrys-03, 6 September
+              Detchart, J., Lochin, E., Lacan, J., and V. Roca, "Tetrys:
+              An On-the-Fly Network Coding Protocol", Work in Progress,
+              Internet-Draft, draft-irtf-nwcrg-tetrys-04, 17 November
               2022, <https://datatracker.ietf.org/doc/html/draft-irtf-
-              nwcrg-tetrys-03>.
+              nwcrg-tetrys-04>.
 
    [I-D.roca-nwcrg-rlc-fec-scheme-for-quic]
               Roca, V., Michel, F., Swett, I., and M. Montpetit,
@@ -611,7 +602,8 @@ Informative References
 
    [QUIC-FEC] Michel, F., De Coninck, Q., and O. Bonaventure, "QUIC-FEC:
               Bringing the benefits of Forward Erasure Correction to
-              QUIC", 2019 IFIP Networking Conference (IFIP Networking),
+              QUIC", IEEE, 2019 IFIP Networking Conference
+              (IFIP Networking),
               DOI 10.23919/ifipnetworking.2019.8816838, May 2019,
               <https://doi.org/10.23919/ifipnetworking.2019.8816838>.
 
@@ -623,8 +615,8 @@ Informative References
 
    [rQUIC]    Garrido, P., Sanchez, I., Ferlin, S., Aguero, R., and O.
               Alay, "rQUIC: Integrating FEC with QUIC for Robust
-              Wireless Communications", 2019 IEEE Global Communications
-              Conference (GLOBECOM),
+              Wireless Communications", IEEE, 2019 IEEE Global
+              Communications Conference (GLOBECOM),
               DOI 10.1109/globecom38437.2019.9013401, December 2019,
               <https://doi.org/10.1109/globecom38437.2019.9013401>.
 
