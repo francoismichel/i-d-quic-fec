@@ -1317,11 +1317,15 @@ endpoint behaves.<a href="#section-3-1" class="pilcrow">¶</a></p>
   +---------------------------------------------------------+
   |                       Application                       |
   +---------------------------------------------------------+
-     |                                                   ^
-     | Application data           Received and recovered |
-     | to send                          application data |
-  ___|___________________________________________________|_______
- |   v                                                   |       |
+       | Application data                            ^
+       | to send              Received and recovered |
+       v                            application data |
+    +------+                                      +------+
+  __| Send |______________________________________| Recv |_______
+ |  | API  |                                      | API  |       |
+ |  +------+                                      +------+       |
+ |     |                                             ^           |
+ |     v                                             |           |
  | +---------+                QUIC              +---------+      |
  | |   FEC   |                                  |   FEC   |      |
  | | Encoder |                                  | Decoder |      |
@@ -1348,13 +1352,18 @@ endpoint behaves.<a href="#section-3-1" class="pilcrow">¶</a></p>
 <a href="#name-exchanging-source-and-repai" class="selfRef">Exchanging source and repair symbols over a QUIC connection</a>
         </figcaption></figure>
 </div>
-<p id="section-3-3">When the application wants to send new data over the connection (left
-part of <a href="#fig-packets-and-symbols" class="auto internal xref">Figure 1</a>), the Encoder encodes the
+<p id="section-3-3">The application submits new data using the stream or datagram abstraction provided by the QUIC Send API (left part of <a href="#fig-packets-and-symbols" class="auto internal xref">Figure 1</a>). The FEC Encoder encodes the
 application data into one or several source symbols and generates repair
 symbols protecting these when needed. These symbols are then packed into
-network packets by the Sender.
-When repair symbols must be sent, the Sender packs them inside
-dedicated QUIC frames discussed in <a href="#sec-repair-frame" class="auto internal xref">Section 5.3</a>.<a href="#section-3-3" class="pilcrow">¶</a></p>
+network packets by the QUIC Sender.
+When repair symbols must be sent, the QUIC Sender packs them inside
+dedicated QUIC frames discussed in <a href="#sec-repair-frame" class="auto internal xref">Section 5.3</a>.
+On the receiving path (right part of <a href="#fig-packets-and-symbols" class="auto internal xref">Figure 1</a>),
+the QUIC Receiver consumes network packets and unpacks the symbols they
+contain. It provides the received symbols
+to the FEC Decoder that then recovers the lost source symbols when
+possible. It finally passes the application data present in the newly received or recovered source symbols to the application using the QUIC
+Recv API.<a href="#section-3-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="fec-and-the-loss-recovery-mechanism">
