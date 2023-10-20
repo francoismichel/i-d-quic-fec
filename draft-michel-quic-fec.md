@@ -455,7 +455,7 @@ frame defined in this document.
             |                                           | (the source)
             |                                           | (symbol    )
             |                                           |
-            |        PKT(2)[ACK[2, 3], SYMBOL_ACK([1])] |
+            |        PKT(2)[ACK[2, 3], SYMBOL_ACK[1]] |
 (Empty rtx) |<------------------------------------------| Deliver
 (    queue) |                                           | "ABCDEF"
             |                                           | to the App
