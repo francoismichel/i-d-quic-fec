@@ -426,11 +426,11 @@ illustrates this example. In this example, the QUIC Sender
 sends the stream data into two separate regular STREAM frames.
 Following the Alternative 1 proposed in {{sec-source-symbol-frame}},
 these two STREAM frames are then placed into two SOURCE_SYMBOL
-frames sent in the QUIC packets 1 and 2 and are protected
-by a REPAIR_SYMBOL frame sent in packet 3. PKT(1)
-containing the bytes "ABC" is lost. Upon reception of PKT(2),
-the bytes "DEF" must be stored by the receiver. The receiver then
-has to wait for receiving the first part of the stream before
+frames sent in the QUIC packets PKT(1) and PKT(2). The two source
+symbols are protected by a REPAIR_SYMBOL frame sent in PKT(3).
+PKT(1), containing the bytes "ABC" is lost. Upon the reception of
+PKT(2), the bytes "DEF" must be stored by the receiver. The receiver
+then has to wait for receiving the first part of the stream before
 delivering "DEF" to the application. Once PKT(3) is received,
 the repair symbol it contains can be used to recompute the
 first source symbol containing the bytes "ABC" without having
