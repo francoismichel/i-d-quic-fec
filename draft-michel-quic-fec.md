@@ -30,13 +30,14 @@ author:
     email: "francois.michel@uclouvain.be"
  -
     fullname: Olivier Bonaventure
-    organization: UCLouvain
+    organization: UCLouvain, WEL RI
     email: "olivier.bonaventure@uclouvain.be"
 
 normative:
   QUICv1: RFC9000
   QUIC-RECOVERY: RFC9002
   RFC9265:
+  QUIC-DATAGRAM: RFC9221
 
 informative:
   QUIC-FEC: DOI.10.23919/IFIPNetworking.2019.8816838
@@ -73,10 +74,13 @@ ensure a good quality of experience to their users.
 Works has already been done to consider the use of
 Forward Erasure Correction (FEC) for the QUIC protocol to ensure timely
 data delivery for delay-sensitive applications {{QUIC-FEC}} {{FlEC}}
-{{rQUIC}} {{I-D.swett-nwcrg-coding-for-quic}}.
+{{rQUIC}} {{I-D.swett-nwcrg-coding-for-quic}}. These loss recovery
+mechanisms generally maintain a coding window containing the
+latency-sensitive application data and generate repair symbols
+protecting this coding window from packet losses.
 This document defines additions to the QUIC protocol to extend its
-loss recovery mechanism and make it able to recover from packet
-losses prior to retransmission using FEC.
+loss recovery mechanism with FEC capabilities and make it able to
+recover from packet losses prior to their retransmission.
 
 
 # Conventions and Definitions
@@ -161,7 +165,9 @@ endpoint behaves.
 {: #fig-packets-and-symbols title="Exchanging source and
 repair symbols over a QUIC connection"}
 
-The application submits new data using the stream or datagram abstraction provided by the QUIC Send API (left part of {{fig-packets-and-symbols}}). The FEC Encoder encodes the
+The application submits new data using the stream or datagram abstraction
+provided by the QUIC Send API (left part of {{fig-packets-and-symbols}}).
+The FEC Encoder encodes the
 application data into one or several source symbols and generates repair
 symbols protecting these when needed. These symbols are then packed into
 network packets by the QUIC Sender.
@@ -204,7 +210,7 @@ symbols and how to compose a source symbol from what is sent on the wire.
 Versions 01 and 02 of {{I-D.swett-nwcrg-coding-for-quic}} only protect
 streams payload. The idea is simple when using a single stream but becomes
 complicated and requires more signaling in a multi-stream scenario. It also
-cannot protect DATAGRAM frames.
+cannot protect DATAGRAM frames {{QUIC-DATAGRAM}}.
 In this document, we propose to consider whole frames as part of the source
 symbols.
 In order to reduce signalling between the peers, a single source symbol
@@ -232,8 +238,8 @@ header field. The second solution being incompatible with {{QUICv1}},
 it is not discussed in this document. The source
 symbol payload can either be put inside a dedicated frame
 ({{sec-source-symbol-frame}}) or infered when handling a specific frame
-({{sec-sid-frame}}). Both alternatives lead to the exact same packet
-wire format and outcome.
+({{sec-sid-frame}}). Both alternatives are presented in the next
+sections. Lead to the exact same packet wire format and outcome.
 
 
 ### Alternative 1: sending the source symbol inside a frame
@@ -334,6 +340,11 @@ The source symbols carried by the packets in this example are the same as for
 {{fig-source-symbol-frame-example}} and the outcome and wire
 format are the same.
 
+### Choosing an alternative
+
+One of these two design alternatives must be chosen to complete the design
+of this document. As authors, we tend to prefer Alternative 1 due to the
+idempotent character of the introduced frame.
 
 ## Sending the repair symbols
 {: #sec-repair-frame}
@@ -406,6 +417,54 @@ The FEC receiver MAY decide to only advertize a subset of the received
 source symbols. The SYMBOL_ACK frame MUST NOT be used to infer any congestion
 state on the network (see {{sec-coding-and-congestion}}).
 
+## Example
+
+To illustrate the different mechanisms and frames introduced here,
+let us take an example where an application sends the bytes
+"ABCDEF" over a single QUIC stream. {{fig-example-fec-mechanisms}}
+illustrates this example. In this example, the QUIC Sender
+sends the stream data into two separate regular STREAM frames.
+Following the Alternative 1 proposed in {{sec-source-symbol-frame}},
+these two STREAM frames are then placed into two SOURCE_SYMBOL
+frames sent in the QUIC packets 1 and 2 and are protected
+by a REPAIR_SYMBOL frame sent in packet 3. PKT(1)
+containing the bytes "ABC" is lost. Upon reception of PKT(2),
+the bytes "DEF" must be stored by the receiver. The receiver then
+has to wait for receiving the first part of the stream before
+delivering "DEF" to the application. Once PKT(3) is received,
+the repair symbol it contains can be used to recompute the
+first source symbol containing the bytes "ABC" without having
+to wait for a retransmission. The receiver can tehen deliver
+"ABCDEF" to the application. The packets received through the
+network are acknowledged using a regular ACK frame and the
+recovered source symbol is acknowledged using the SYMBOL_ACK
+frame defined in this document.
+
+~~~~
+        QUIC Sender                               QUIC Receiver
+            |                                           |
+  App sends |                                           |
+   "ABCDEF" |  PKT(1)[SOURCE_SYMBOL(1, STREAM{"ABC"})]  |
+ ---------->|---------------------x                     |
+            |                                           |
+            |  PKT(2)[SOURCE_SYMBOL(2, STREAM{"DEF"})]  |
+            |------------------------------------------>| Store "DEF"
+            |                                           |
+            |  PKT(3)[REPAIR_SYMBOL]                    |
+            |------------------------------------------>| (Recompute )
+            |                                           | (the source)
+            |                                           | (symbol    )
+            |                                           |
+            |        PKT(2)[ACK[2, 3], SYMBOL_ACK([1])] |
+            |<------------------------------------------| Deliver
+(Empty rtx) |                                           | "ABCDEF"
+(    queue) |                                           | to the App
+            |                                           |---------->
+            |                                           |
+            |                                           |
+            |                                           |
+~~~~
+{: #fig-example-fec-mechanisms title="Recovering lost stream data using FEC"}
 
 # Coding and congestion control
 {: #sec-coding-and-congestion}
@@ -529,6 +588,6 @@ Frame ID | Frame name | Specification
 # Acknowledgments
 {:numbered="false"}
 
-Maxime Piraux, Olivier Bonaventure and all the authors of
+Maxime Piraux and all the authors of
 {{I-D.swett-nwcrg-coding-for-quic}}.
 
