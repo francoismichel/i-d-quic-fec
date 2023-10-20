@@ -434,7 +434,7 @@ then has to wait for receiving the first part of the stream before
 delivering "DEF" to the application. Once PKT(3) is received,
 the repair symbol it contains can be used to recompute the
 first source symbol containing the bytes "ABC" without having
-to wait for a retransmission. The receiver can tehen deliver
+to wait for a retransmission. The receiver can then deliver
 "ABCDEF" to the application. The packets received through the
 network are acknowledged using a regular ACK frame and the
 recovered source symbol is acknowledged using the SYMBOL_ACK
