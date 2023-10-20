@@ -474,12 +474,10 @@ Table of Contents
               |                                           | (symbol    )
               |                                           |
               |        PKT(2)[ACK[2, 3], SYMBOL_ACK([1])] |
-              |<------------------------------------------| Deliver
-  (Empty rtx) |                                           | "ABCDEF"
-  (    queue) |                                           | to the App
+  (Empty rtx) |<------------------------------------------| Deliver
+  (    queue) |                                           | "ABCDEF"
+              |                                           | to the App
               |                                           |---------->
-              |                                           |
-              |                                           |
               |                                           |
 
              Figure 9: Recovering lost stream data using FEC
