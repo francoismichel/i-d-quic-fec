@@ -3,9 +3,10 @@
 
 
 QUIC                                                           F. Michel
-Internet-Draft                                            O. Bonaventure
-Intended status: Experimental                                  UCLouvain
-Expires: 19 April 2024                                   17 October 2023
+Internet-Draft                                                 UCLouvain
+Intended status: Experimental                             O. Bonaventure
+Expires: 22 April 2024                                 UCLouvain, WEL RI
+                                                         20 October 2023
 
 
            Forward Erasure Correction for QUIC loss recovery
@@ -49,7 +50,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 19 April 2024.
+   This Internet-Draft will expire on 22 April 2024.
 
 Copyright Notice
 
@@ -77,9 +78,11 @@ Table of Contents
      5.2.  Identifying the source symbols from QUIC packets
        5.2.1.  Alternative 1: sending the source symbol inside a frame
        5.2.2.  Alternative 2: only sending the SID inside a frame
+       5.2.3.  Choosing an alternative
      5.3.  Sending the repair symbols
      5.4.  Announcing the coding window size
      5.5.  Announcing the recovered symbols
+     5.6.  Example
    6.  Coding and congestion control
    7.  Negociating the FEC extension using transport parameters
      7.1.  enable_fec
@@ -109,10 +112,13 @@ Table of Contents
    Works has already been done to consider the use of Forward Erasure
    Correction (FEC) for the QUIC protocol to ensure timely data delivery
    for delay-sensitive applications [QUIC-FEC] [FlEC] [rQUIC]
-   [I-D.swett-nwcrg-coding-for-quic].  This document defines additions
-   to the QUIC protocol to extend its loss recovery mechanism and make
-   it able to recover from packet losses prior to retransmission using
-   FEC.
+   [I-D.swett-nwcrg-coding-for-quic].  These loss recovery mechanisms
+   generally maintain a coding window containing the latency-sensitive
+   application data and generate repair symbols protecting this coding
+   window from packet losses.  This document defines additions to the
+   QUIC protocol to extend its loss recovery mechanism with FEC
+   capabilities and make it able to recover from packet losses prior to
+   their retransmission.
 
 2.  Conventions and Definitions
 
@@ -241,11 +247,11 @@ Table of Contents
    Versions 01 and 02 of [I-D.swett-nwcrg-coding-for-quic] only protect
    streams payload.  The idea is simple when using a single stream but
    becomes complicated and requires more signaling in a multi-stream
-   scenario.  It also cannot protect DATAGRAM frames.  In this document,
-   we propose to consider whole frames as part of the source symbols.
-   In order to reduce signalling between the peers, a single source
-   symbol MUST NOT contain the frames of several QUIC packets at the
-   same time.
+   scenario.  It also cannot protect DATAGRAM frames [QUIC-DATAGRAM].
+   In this document, we propose to consider whole frames as part of the
+   source symbols.  In order to reduce signalling between the peers, a
+   single source symbol MUST NOT contain the frames of several QUIC
+   packets at the same time.
 
 5.2.  Identifying the source symbols from QUIC packets
 
@@ -267,8 +273,9 @@ Table of Contents
    field.  The second solution being incompatible with [QUICv1], it is
    not discussed in this document.  The source symbol payload can either
    be put inside a dedicated frame (Section 5.2.1) or infered when
-   handling a specific frame (Section 5.2.2).  Both alternatives lead to
-   the exact same packet wire format and outcome.
+   handling a specific frame (Section 5.2.2).  Both alternatives are
+   presented in the next sections.  Lead to the exact same packet wire
+   format and outcome.
 
 5.2.1.  Alternative 1: sending the source symbol inside a frame
 
@@ -357,6 +364,12 @@ Table of Contents
    The source symbols carried by the packets in this example are the
    same as for Figure 3 and the outcome and wire format are the same.
 
+5.2.3.  Choosing an alternative
+
+   One of these two design alternatives must be chosen to complete the
+   design of this document.  As authors, we tend to prefer Alternative 1
+   due to the idempotent character of the introduced frame.
+
 5.3.  Sending the repair symbols
 
    The repair symbols and the metadata attached to them are transferred
@@ -423,6 +436,53 @@ Table of Contents
    advertize a subset of the received source symbols.  The SYMBOL_ACK
    frame MUST NOT be used to infer any congestion state on the network
    (see Section 6).
+
+5.6.  Example
+
+   To illustrate the different mechanisms and frames introduced here,
+   let us take an example where an application sends the bytes "ABCDEF"
+   over a single QUIC stream.  Figure 9 illustrates this example.  In
+   this example, the QUIC Sender sends the stream data into two separate
+   regular STREAM frames.  Following the Alternative 1 proposed in
+   Section 5.2.1, these two STREAM frames are then placed into two
+   SOURCE_SYMBOL frames sent in the QUIC packets 1 and 2 and are
+   protected by a REPAIR_SYMBOL frame sent in packet 3.  PKT(1)
+   containing the bytes "ABC" is lost.  Upon reception of PKT(2), the
+   bytes "DEF" must be stored by the receiver.  The receiver then has to
+   wait for receiving the first part of the stream before delivering
+   "DEF" to the application.  Once PKT(3) is received, the repair symbol
+   it contains can be used to recompute the first source symbol
+   containing the bytes "ABC" without having to wait for a
+   retransmission.  The receiver can tehen deliver "ABCDEF" to the
+   application.  The packets received through the network are
+   acknowledged using a regular ACK frame and the recovered source
+   symbol is acknowledged using the SYMBOL_ACK frame defined in this
+   document.
+
+          QUIC Sender                               QUIC Receiver
+              |                                           |
+    App sends |                                           |
+     "ABCDEF" |  PKT(1)[SOURCE_SYMBOL(1, STREAM{"ABC"})]  |
+   ---------->|---------------------x                     |
+              |                                           |
+              |  PKT(2)[SOURCE_SYMBOL(2, STREAM{"DEF"})]  |
+              |------------------------------------------>| Store "DEF"
+              |                                           |
+              |  PKT(3)[REPAIR_SYMBOL]                    |
+              |------------------------------------------>| (Recompute )
+              |                                           | (the source)
+              |                                           | (symbol    )
+              |                                           |
+              |        PKT(2)[ACK[2, 3], SYMBOL_ACK([1])] |
+              |<------------------------------------------| Deliver
+  (Empty rtx) |                                           | "ABCDEF"
+  (    queue) |                                           | to the App
+              |                                           |---------->
+              |                                           |
+              |                                           |
+              |                                           |
+
+             Figure 9: Recovering lost stream data using FEC
 
 6.  Coding and congestion control
 
@@ -548,12 +608,18 @@ Table of Contents
 
 Acknowledgments
 
-   Maxime Piraux, Olivier Bonaventure and all the authors of
+   Maxime Piraux and all the authors of
    [I-D.swett-nwcrg-coding-for-quic].
 
 References
 
 Normative References
+
+   [QUIC-DATAGRAM]
+              Pauly, T., Kinnear, E., and D. Schinazi, "An Unreliable
+              Datagram Extension to QUIC", RFC 9221,
+              DOI 10.17487/RFC9221, March 2022,
+              <https://www.rfc-editor.org/rfc/rfc9221>.
 
    [QUIC-RECOVERY]
               Iyengar, J., Ed. and I. Swett, Ed., "QUIC Loss Detection
@@ -639,5 +705,5 @@ Authors' Addresses
 
 
    Olivier Bonaventure
-   UCLouvain
+   UCLouvain, WEL RI
    Email: olivier.bonaventure@uclouvain.be

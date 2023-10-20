@@ -12,14 +12,14 @@
 needed for QUIC to apply Forward Erasure Correction on the data sent
 through the network. 
     " name="description">
-<meta content="xml2rfc 3.18.1" name="generator">
+<meta content="xml2rfc 3.18.2" name="generator">
 <meta content="FEC" name="keyword">
 <meta content="network coding" name="keyword">
 <meta content="QUIC" name="keyword">
 <meta content="draft-michel-quic-fec-latest" name="ietf.draft">
 <!-- Generator version information:
-  xml2rfc 3.18.1
-    Python 3.11.5
+  xml2rfc 3.18.2
+    Python 3.11.6
     ConfigArgParse 1.5.3
     google-i18n-address 3.1.0
     intervaltree 3.1.0
@@ -1034,7 +1034,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
 </tr></thead>
 <tfoot><tr>
 <td class="left">Michel &amp; Bonaventure</td>
-<td class="center">Expires 19 April 2024</td>
+<td class="center">Expires 22 April 2024</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1047,12 +1047,12 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <dd class="internet-draft">draft-michel-quic-fec-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2023-10-17" class="published">17 October 2023</time>
+<time datetime="2023-10-20" class="published">20 October 2023</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Experimental</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2024-04-19">19 April 2024</time></dd>
+<dd class="expires"><time datetime="2024-04-22">22 April 2024</time></dd>
 <dt class="label-authors">Authors:</dt>
 <dd class="authors">
 <div class="author">
@@ -1061,7 +1061,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
 </div>
 <div class="author">
       <div class="author-name">O. Bonaventure</div>
-<div class="org">UCLouvain</div>
+<div class="org">UCLouvain, WEL RI</div>
 </div>
 </dd>
 </dl>
@@ -1108,7 +1108,7 @@ through the network.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 19 April 2024.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 22 April 2024.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1169,6 +1169,9 @@ through the network.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
                   <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.2.2.2">
                     <p id="section-toc.1-1.5.2.2.2.2.1"><a href="#section-5.2.2" class="auto internal xref">5.2.2</a>.  <a href="#name-alternative-2-only-sending-" class="internal xref">Alternative 2: only sending the SID inside a frame</a></p>
 </li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.2.2.3">
+                    <p id="section-toc.1-1.5.2.2.2.3.1"><a href="#section-5.2.3" class="auto internal xref">5.2.3</a>.  <a href="#name-choosing-an-alternative" class="internal xref">Choosing an alternative</a></p>
+</li>
                 </ul>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.3">
@@ -1179,6 +1182,9 @@ through the network.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.5">
                 <p id="section-toc.1-1.5.2.5.1"><a href="#section-5.5" class="auto internal xref">5.5</a>.  <a href="#name-announcing-the-recovered-sy" class="internal xref">Announcing the recovered symbols</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.6">
+                <p id="section-toc.1-1.5.2.6.1"><a href="#section-5.6" class="auto internal xref">5.6</a>.  <a href="#name-example" class="internal xref">Example</a></p>
 </li>
             </ul>
 </li>
@@ -1254,10 +1260,13 @@ ensure a good quality of experience to their users.<a href="#section-1-1" class=
 <p id="section-1-2">Works has already been done to consider the use of
 Forward Erasure Correction (FEC) for the QUIC protocol to ensure timely
 data delivery for delay-sensitive applications <span>[<a href="#QUIC-FEC" class="cite xref">QUIC-FEC</a>]</span> <span>[<a href="#FlEC" class="cite xref">FlEC</a>]</span>
-        <span>[<a href="#rQUIC" class="cite xref">rQUIC</a>]</span> <span>[<a href="#I-D.swett-nwcrg-coding-for-quic" class="cite xref">I-D.swett-nwcrg-coding-for-quic</a>]</span>.
+        <span>[<a href="#rQUIC" class="cite xref">rQUIC</a>]</span> <span>[<a href="#I-D.swett-nwcrg-coding-for-quic" class="cite xref">I-D.swett-nwcrg-coding-for-quic</a>]</span>. These loss recovery
+mechanisms generally maintain a coding window containing the
+latency-sensitive application data and generate repair symbols
+protecting this coding window from packet losses.
 This document defines additions to the QUIC protocol to extend its
-loss recovery mechanism and make it able to recover from packet
-losses prior to retransmission using FEC.<a href="#section-1-2" class="pilcrow">¶</a></p>
+loss recovery mechanism with FEC capabilities and make it able to
+recover from packet losses prior to their retransmission.<a href="#section-1-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="conventions-and-definitions">
@@ -1352,7 +1361,9 @@ endpoint behaves.<a href="#section-3-1" class="pilcrow">¶</a></p>
 <a href="#name-exchanging-source-and-repai" class="selfRef">Exchanging source and repair symbols over a QUIC connection</a>
         </figcaption></figure>
 </div>
-<p id="section-3-3">The application submits new data using the stream or datagram abstraction provided by the QUIC Send API (left part of <a href="#fig-packets-and-symbols" class="auto internal xref">Figure 1</a>). The FEC Encoder encodes the
+<p id="section-3-3">The application submits new data using the stream or datagram abstraction
+provided by the QUIC Send API (left part of <a href="#fig-packets-and-symbols" class="auto internal xref">Figure 1</a>).
+The FEC Encoder encodes the
 application data into one or several source symbols and generates repair
 symbols protecting these when needed. These symbols are then packed into
 network packets by the QUIC Sender.
@@ -1401,7 +1412,7 @@ symbols and how to compose a source symbol from what is sent on the wire.<a href
 <p id="section-5.1-2">Versions 01 and 02 of <span>[<a href="#I-D.swett-nwcrg-coding-for-quic" class="cite xref">I-D.swett-nwcrg-coding-for-quic</a>]</span> only protect
 streams payload. The idea is simple when using a single stream but becomes
 complicated and requires more signaling in a multi-stream scenario. It also
-cannot protect DATAGRAM frames.
+cannot protect DATAGRAM frames <span>[<a href="#QUIC-DATAGRAM" class="cite xref">QUIC-DATAGRAM</a>]</span>.
 In this document, we propose to consider whole frames as part of the source
 symbols.
 In order to reduce signalling between the peers, a single source symbol
@@ -1431,8 +1442,8 @@ header field. The second solution being incompatible with <span>[<a href="#QUICv
 it is not discussed in this document. The source
 symbol payload can either be put inside a dedicated frame
 (<a href="#sec-source-symbol-frame" class="auto internal xref">Section 5.2.1</a>) or infered when handling a specific frame
-(<a href="#sec-sid-frame" class="auto internal xref">Section 5.2.2</a>). Both alternatives lead to the exact same packet
-wire format and outcome.<a href="#section-5.2-2" class="pilcrow">¶</a></p>
+(<a href="#sec-sid-frame" class="auto internal xref">Section 5.2.2</a>). Both alternatives are presented in the next
+sections. Lead to the exact same packet wire format and outcome.<a href="#section-5.2-2" class="pilcrow">¶</a></p>
 <div id="sec-source-symbol-frame">
 <section id="section-5.2.1">
           <h4 id="name-alternative-1-sending-the-s">
@@ -1552,6 +1563,16 @@ Sender                                       Receiver
 format are the same.<a href="#section-5.2.2-5" class="pilcrow">¶</a></p>
 </section>
 </div>
+<div id="choosing-an-alternative">
+<section id="section-5.2.3">
+          <h4 id="name-choosing-an-alternative">
+<a href="#section-5.2.3" class="section-number selfRef">5.2.3. </a><a href="#name-choosing-an-alternative" class="section-name selfRef">Choosing an alternative</a>
+          </h4>
+<p id="section-5.2.3-1">One of these two design alternatives must be chosen to complete the design
+of this document. As authors, we tend to prefer Alternative 1 due to the
+idempotent character of the introduced frame.<a href="#section-5.2.3-1" class="pilcrow">¶</a></p>
+</section>
+</div>
 </section>
 </div>
 <div id="sec-repair-frame">
@@ -1644,6 +1665,65 @@ size. There is no obligation for a FEC receiver to send SYMBOL_ACK frames.
 The FEC receiver <span class="bcp14">MAY</span> decide to only advertize a subset of the received
 source symbols. The SYMBOL_ACK frame <span class="bcp14">MUST NOT</span> be used to infer any congestion
 state on the network (see <a href="#sec-coding-and-congestion" class="auto internal xref">Section 6</a>).<a href="#section-5.5-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="example">
+<section id="section-5.6">
+        <h3 id="name-example">
+<a href="#section-5.6" class="section-number selfRef">5.6. </a><a href="#name-example" class="section-name selfRef">Example</a>
+        </h3>
+<p id="section-5.6-1">To illustrate the different mechanisms and frames introduced here,
+let us take an example where an application sends the bytes
+"ABCDEF" over a single QUIC stream. <a href="#fig-example-fec-mechanisms" class="auto internal xref">Figure 9</a>
+illustrates this example. In this example, the QUIC Sender
+sends the stream data into two separate regular STREAM frames.
+Following the Alternative 1 proposed in <a href="#sec-source-symbol-frame" class="auto internal xref">Section 5.2.1</a>,
+these two STREAM frames are then placed into two SOURCE_SYMBOL
+frames sent in the QUIC packets 1 and 2 and are protected
+by a REPAIR_SYMBOL frame sent in packet 3. PKT(1)
+containing the bytes "ABC" is lost. Upon reception of PKT(2),
+the bytes "DEF" must be stored by the receiver. The receiver then
+has to wait for receiving the first part of the stream before
+delivering "DEF" to the application. Once PKT(3) is received,
+the repair symbol it contains can be used to recompute the
+first source symbol containing the bytes "ABC" without having
+to wait for a retransmission. The receiver can tehen deliver
+"ABCDEF" to the application. The packets received through the
+network are acknowledged using a regular ACK frame and the
+recovered source symbol is acknowledged using the SYMBOL_ACK
+frame defined in this document.<a href="#section-5.6-1" class="pilcrow">¶</a></p>
+<span id="name-recovering-lost-stream-data"></span><div id="fig-example-fec-mechanisms">
+<figure id="figure-9">
+          <div class="alignLeft art-text artwork" id="section-5.6-2.1">
+<pre>
+        QUIC Sender                               QUIC Receiver
+            |                                           |
+  App sends |                                           |
+   "ABCDEF" |  PKT(1)[SOURCE_SYMBOL(1, STREAM{"ABC"})]  |
+ ----------&gt;|---------------------x                     |
+            |                                           |
+            |  PKT(2)[SOURCE_SYMBOL(2, STREAM{"DEF"})]  |
+            |------------------------------------------&gt;| Store "DEF"
+            |                                           |
+            |  PKT(3)[REPAIR_SYMBOL]                    |
+            |------------------------------------------&gt;| (Recompute )
+            |                                           | (the source)
+            |                                           | (symbol    )
+            |                                           |
+            |        PKT(2)[ACK[2, 3], SYMBOL_ACK([1])] |
+            |&lt;------------------------------------------| Deliver
+(Empty rtx) |                                           | "ABCDEF"
+(    queue) |                                           | to the App
+            |                                           |----------&gt;
+            |                                           |
+            |                                           |
+            |                                           |
+</pre>
+</div>
+<figcaption><a href="#figure-9" class="selfRef">Figure 9</a>:
+<a href="#name-recovering-lost-stream-data" class="selfRef">Recovering lost stream data using FEC</a>
+          </figcaption></figure>
+</div>
 </section>
 </div>
 </section>
@@ -1890,7 +1970,7 @@ version 00 of this document is 0x238ffece00).<a href="#section-9.1-2" class="pil
       <h2 id="name-acknowledgments">
 <a href="#name-acknowledgments" class="section-name selfRef">Acknowledgments</a>
       </h2>
-<p id="section-10-1">Maxime Piraux, Olivier Bonaventure and all the authors of
+<p id="section-10-1">Maxime Piraux and all the authors of
 <span>[<a href="#I-D.swett-nwcrg-coding-for-quic" class="cite xref">I-D.swett-nwcrg-coding-for-quic</a>]</span>.<a href="#section-10-1" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -1904,6 +1984,10 @@ version 00 of this document is 0x238ffece00).<a href="#section-9.1-2" class="pil
 <a href="#name-normative-references" class="section-name selfRef">Normative References</a>
         </h3>
 <dl class="references">
+<dt id="QUIC-DATAGRAM">[QUIC-DATAGRAM]</dt>
+        <dd>
+<span class="refAuthor">Pauly, T.</span>, <span class="refAuthor">Kinnear, E.</span>, and <span class="refAuthor">D. Schinazi</span>, <span class="refTitle">"An Unreliable Datagram Extension to QUIC"</span>, <span class="seriesInfo">RFC 9221</span>, <span class="seriesInfo">DOI 10.17487/RFC9221</span>, <time datetime="2022-03" class="refDate">March 2022</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9221">https://www.rfc-editor.org/rfc/rfc9221</a>&gt;</span>. </dd>
+<dd class="break"></dd>
 <dt id="QUIC-RECOVERY">[QUIC-RECOVERY]</dt>
         <dd>
 <span class="refAuthor">Iyengar, J., Ed.</span> and <span class="refAuthor">I. Swett, Ed.</span>, <span class="refTitle">"QUIC Loss Detection and Congestion Control"</span>, <span class="seriesInfo">RFC 9002</span>, <span class="seriesInfo">DOI 10.17487/RFC9002</span>, <time datetime="2021-05" class="refDate">May 2021</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9002">https://www.rfc-editor.org/rfc/rfc9002</a>&gt;</span>. </dd>
@@ -1980,7 +2064,7 @@ version 00 of this document is 0x238ffece00).<a href="#section-9.1-2" class="pil
 </address>
 <address class="vcard">
         <div dir="auto" class="left"><span class="fn nameRole">Olivier Bonaventure</span></div>
-<div dir="auto" class="left"><span class="org">UCLouvain</span></div>
+<div dir="auto" class="left"><span class="org">UCLouvain, WEL RI</span></div>
 <div class="email">
 <span>Email:</span>
 <a href="mailto:olivier.bonaventure@uclouvain.be" class="email">olivier.bonaventure@uclouvain.be</a>
