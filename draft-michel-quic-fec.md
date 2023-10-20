@@ -438,7 +438,8 @@ to wait for a retransmission. The receiver can then deliver
 "ABCDEF" to the application. The packets received through the
 network are acknowledged using a regular ACK frame and the
 recovered source symbol is acknowledged using a SYMBOL_ACK
-frame containing the ID of the recovered source symbol.
+frame. The SYMBOL_ACK frame simply lists the IDs of the
+recovered source symbols.
 
 ~~~~
         QUIC Sender                               QUIC Receiver
