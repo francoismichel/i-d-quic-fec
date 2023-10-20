@@ -1699,13 +1699,13 @@ frame containing the ID of the recovered source symbol.<a href="#section-5.6-1" 
         QUIC Sender                               QUIC Receiver
             |                                           |
   App sends |                                           |
-   "ABCDEF" |  PKT(42)[SOURCE_SYMBOL(1, STREAM{"ABC"})]  |
+   "ABCDEF" |  PKT(42)[SOURCE_SYMBOL(1, STREAM{"ABC"})] |
  ----------&gt;|---------------------x                     |
             |                                           |
-            |  PKT(43)[SOURCE_SYMBOL(2, STREAM{"DEF"})]  |
+            |  PKT(43)[SOURCE_SYMBOL(2, STREAM{"DEF"})] |
             |------------------------------------------&gt;| Store "DEF"
             |                                           |
-            |  PKT(44)[REPAIR_SYMBOL]                    |
+            |  PKT(44)[REPAIR_SYMBOL]                   |
             |------------------------------------------&gt;| (Recompute )
             |                                           | (the source)
             |                                           | (symbol    )
