@@ -456,12 +456,10 @@ frame defined in this document.
             |                                           | (symbol    )
             |                                           |
             |        PKT(2)[ACK[2, 3], SYMBOL_ACK([1])] |
-            |<------------------------------------------| Deliver
-(Empty rtx) |                                           | "ABCDEF"
-(    queue) |                                           | to the App
+(Empty rtx) |<------------------------------------------| Deliver
+(    queue) |                                           | "ABCDEF"
+            |                                           | to the App
             |                                           |---------->
-            |                                           |
-            |                                           |
             |                                           |
 ~~~~
 {: #fig-example-fec-mechanisms title="Recovering lost stream data using FEC"}
