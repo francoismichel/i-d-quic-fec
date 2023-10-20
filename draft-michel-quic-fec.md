@@ -426,36 +426,36 @@ illustrates this example. In this example, the QUIC Sender
 sends the stream data into two separate regular STREAM frames.
 Following the Alternative 1 proposed in {{sec-source-symbol-frame}},
 these two STREAM frames are then placed into two SOURCE_SYMBOL
-frames sent in the QUIC packets PKT(1) and PKT(2). The two source
-symbols are protected by a REPAIR_SYMBOL frame sent in PKT(3).
-PKT(1), containing the bytes "ABC" is lost. Upon the reception of
-PKT(2), the bytes "DEF" must be stored by the receiver. The receiver
+frames sent in the QUIC packets PKT(42) and PKT(43). The two source
+symbols are protected by a REPAIR_SYMBOL frame sent in PKT(44).
+PKT(42), containing the bytes "ABC" is lost. Upon the reception of
+PKT(43), the bytes "DEF" must be stored by the receiver. The receiver
 then has to wait for receiving the first part of the stream before
-delivering "DEF" to the application. Once PKT(3) is received,
+delivering "DEF" to the application. Once PKT(44) is received,
 the repair symbol it contains can be used to recompute the
 first source symbol containing the bytes "ABC" without having
 to wait for a retransmission. The receiver can then deliver
 "ABCDEF" to the application. The packets received through the
 network are acknowledged using a regular ACK frame and the
-recovered source symbol is acknowledged using the SYMBOL_ACK
-frame defined in this document.
+recovered source symbol is acknowledged using a SYMBOL_ACK
+frame containing the ID of the recovered source symbol.
 
 ~~~~
         QUIC Sender                               QUIC Receiver
             |                                           |
   App sends |                                           |
-   "ABCDEF" |  PKT(1)[SOURCE_SYMBOL(1, STREAM{"ABC"})]  |
+   "ABCDEF" |  PKT(42)[SOURCE_SYMBOL(1, STREAM{"ABC"})]  |
  ---------->|---------------------x                     |
             |                                           |
-            |  PKT(2)[SOURCE_SYMBOL(2, STREAM{"DEF"})]  |
+            |  PKT(43)[SOURCE_SYMBOL(2, STREAM{"DEF"})]  |
             |------------------------------------------>| Store "DEF"
             |                                           |
-            |  PKT(3)[REPAIR_SYMBOL]                    |
+            |  PKT(44)[REPAIR_SYMBOL]                    |
             |------------------------------------------>| (Recompute )
             |                                           | (the source)
             |                                           | (symbol    )
             |                                           |
-            |        PKT(2)[ACK[2, 3], SYMBOL_ACK[1]]   |
+            |      PKT(50)[ACK[42, 43], SYMBOL_ACK[1]]  |
 (Empty rtx) |<------------------------------------------| Deliver
 (    queue) |                                           | "ABCDEF"
             |                                           | to the App
