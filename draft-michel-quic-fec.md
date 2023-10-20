@@ -444,13 +444,13 @@ frame containing the ID of the recovered source symbol.
         QUIC Sender                               QUIC Receiver
             |                                           |
   App sends |                                           |
-   "ABCDEF" |  PKT(42)[SOURCE_SYMBOL(1, STREAM{"ABC"})]  |
+   "ABCDEF" |  PKT(42)[SOURCE_SYMBOL(1, STREAM{"ABC"})] |
  ---------->|---------------------x                     |
             |                                           |
-            |  PKT(43)[SOURCE_SYMBOL(2, STREAM{"DEF"})]  |
+            |  PKT(43)[SOURCE_SYMBOL(2, STREAM{"DEF"})] |
             |------------------------------------------>| Store "DEF"
             |                                           |
-            |  PKT(44)[REPAIR_SYMBOL]                    |
+            |  PKT(44)[REPAIR_SYMBOL]                   |
             |------------------------------------------>| (Recompute )
             |                                           | (the source)
             |                                           | (symbol    )
