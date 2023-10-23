@@ -5,8 +5,8 @@
 QUIC                                                           F. Michel
 Internet-Draft                                                 UCLouvain
 Intended status: Experimental                             O. Bonaventure
-Expires: 22 April 2024                                 UCLouvain, WEL RI
-                                                         20 October 2023
+Expires: 25 April 2024                                 UCLouvain, WEL RI
+                                                         23 October 2023
 
 
            Forward Erasure Correction for QUIC loss recovery
@@ -50,7 +50,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 22 April 2024.
+   This Internet-Draft will expire on 25 April 2024.
 
 Copyright Notice
 
@@ -164,8 +164,8 @@ Table of Contents
 3.  Network packets and coded symbols
 
    QUIC endpoints exchange information over a network channel.  Adding
-   Forward Erasure Correction to QUIC introduces adds a FEC encoder and
-   a FEC decoder to the QUIC endpoint.  The encoder and decoder exchange
+   Forward Erasure Correction to QUIC introduces a FEC encoder and a FEC
+   decoder to the QUIC endpoint.  The encoder and decoder exchange
    source and repair symbols that are carried through QUIC frames inside
    QUIC packets.  Figure 1 illustrates how a FEC-enabled QUIC endpoint
    behaves.
@@ -606,7 +606,7 @@ Table of Contents
 
 Acknowledgments
 
-   Maxime Piraux and all the authors of
+   Maxime Piraux, Louis Navarre and all the authors of
    [I-D.swett-nwcrg-coding-for-quic].
 
 References
