@@ -167,17 +167,18 @@ repair symbols over a QUIC connection"}
 
 The application submits new data using the stream or datagram abstraction
 provided by the QUIC Send API (left part of {{fig-packets-and-symbols}}).
-The FEC Encoder encodes the
-application data into one or several source symbols and generates repair
-symbols protecting these when needed. These symbols are then packed into
-network packets by the QUIC Sender.
+The FEC Encoder encodes the QUIC frames containing application data
+(e.g. STREAM and DATAGRAM frames) into one or several source symbols
+and generates repair symbols protecting these when needed. These
+symbols are then packed into network packets by the QUIC Sender.
 When repair symbols must be sent, the QUIC Sender packs them inside
 dedicated QUIC frames discussed in {{sec-repair-frame}}.
 On the receiving path (right part of {{fig-packets-and-symbols}}),
 the QUIC Receiver consumes network packets and unpacks the symbols they
 contain. It provides the received symbols
 to the FEC Decoder that then recovers the lost source symbols when
-possible. It finally passes the application data present in the newly received or recovered source symbols to the application using the QUIC
+possible. It finally passes the application data present in the newly
+received or recovered source symbols to the application using the QUIC
 Recv API.
 
 
