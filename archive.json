@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-04-21T00:43:58.658470+00:00",
+  "timestamp": "2024-04-23T00:41:01.423588+00:00",
   "repo": "francoismichel/i-d-quic-fec",
   "labels": [
     {
@@ -49,6 +49,87 @@
       "color": "ffffff"
     }
   ],
-  "issues": [],
+  "issues": [
+    {
+      "number": 1,
+      "id": "I_kwDOIFfWZc6GdGMt",
+      "title": "Suggesting to add a section of QUIC fec usages",
+      "url": "https://github.com/francoismichel/i-d-quic-fec/issues/1",
+      "state": "OPEN",
+      "author": "rachelhuang",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "There're 2 usages of QUIC FEC. One is for flows of RTC applications which is this draft mainly for; another, which in our case, is to protect short messages in some scenarios where BDP is large and applications are delay sensitive, e.g.,  instant messaging, control channels for multimedia conferencing.\r\nIn the latter case, short message FEC mechanism uses FEC to produce multiple FEC packets together sent with original packets instead of sending multiple duplicate packets. It would be useful to include texts to prove the current approach can suppport both scenarios. We can help to add some texts if necessary:)",
+      "createdAt": "2024-04-22T07:19:38Z",
+      "updatedAt": "2024-04-22T07:19:38Z",
+      "closedAt": null,
+      "comments": []
+    },
+    {
+      "number": 2,
+      "id": "I_kwDOIFfWZc6GdGmv",
+      "title": "Alternative 1 and Alternative 2",
+      "url": "https://github.com/francoismichel/i-d-quic-fec/issues/2",
+      "state": "OPEN",
+      "author": "rachelhuang",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Alternative 1 is more like a nesting frame, it may add some cost when supporting in an existing QUIC implementation. Would it be more simple to use alternative 2?  what do you mean \"the SID frame is not idempotent\"?\r\n\r\n\r\n\r\n",
+      "createdAt": "2024-04-22T07:20:33Z",
+      "updatedAt": "2024-04-22T07:20:33Z",
+      "closedAt": null,
+      "comments": []
+    },
+    {
+      "number": 3,
+      "id": "I_kwDOIFfWZc6GdHwT",
+      "title": "How to associate the source symbol with repair symbol",
+      "url": "https://github.com/francoismichel/i-d-quic-fec/issues/3",
+      "state": "OPEN",
+      "author": "rachelhuang",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "How to associate the source symbol with repair symbol? Is it in the repair symbol payload which is implementation based? Do you think we should define it clearly in the draft?\r\n",
+      "createdAt": "2024-04-22T07:23:03Z",
+      "updatedAt": "2024-04-22T07:34:08Z",
+      "closedAt": null,
+      "comments": []
+    },
+    {
+      "number": 4,
+      "id": "I_kwDOIFfWZc6GdIXJ",
+      "title": "Impact of Retransmission",
+      "url": "https://github.com/francoismichel/i-d-quic-fec/issues/4",
+      "state": "OPEN",
+      "author": "rachelhuang",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "\r\nIf the recovery is done by the receiver using FEC, it is suggested not to retransmission the packets at the sender. If the lost packets are repair symbol, the sender should not retransmission it. I think we should add such suggestion in the text, what do you think?",
+      "createdAt": "2024-04-22T07:24:09Z",
+      "updatedAt": "2024-04-22T07:24:09Z",
+      "closedAt": null,
+      "comments": []
+    },
+    {
+      "number": 5,
+      "id": "I_kwDOIFfWZc6GdIzN",
+      "title": "Adaptive FEC mechanism support",
+      "url": "https://github.com/francoismichel/i-d-quic-fec/issues/5",
+      "state": "OPEN",
+      "author": "rachelhuang",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "FEC redundancy can be dynamically adjusted during transmission based on network conditions, e.g., loss rate. To support this, FEC redundancy can be periodically sent by the sender. There are maybe 2 ways to do this, either encoded in the FEC repair symbol or together with FEC_window.",
+      "createdAt": "2024-04-22T07:25:08Z",
+      "updatedAt": "2024-04-22T07:25:08Z",
+      "closedAt": null,
+      "comments": []
+    }
+  ],
   "pulls": []
 }
